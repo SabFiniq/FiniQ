@@ -60,7 +60,7 @@
       font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;padding:6px 14px;
       border-radius:8px;cursor:pointer;transition:all .2s;}
     .ms-add-btn:hover{background:rgba(0,214,143,.25);}
-    .ms-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+    .ms-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
     .ms-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
       border-radius:12px;padding:14px 16px;}
     .ms-card.income{border-color:rgba(0,214,143,.25);}
@@ -219,6 +219,9 @@
     .tab-content{display:none;} .tab-content.active{display:block;}
 
     /* ── RESPONSIVE ── */
+    @media(max-width:1050px){
+      .ms-cards{grid-template-columns:repeat(3,1fr);}
+    }
     @media(max-width:900px){
       .stats-grid{grid-template-columns:repeat(2,1fr);}
       .charts-grid{grid-template-columns:1fr;}
@@ -281,29 +284,42 @@
         <button class="ms-add-btn" onclick="openAddIncome()">💼 Add Salary / Income</button>
       </div>
       <div class="ms-cards">
+        <!-- Card 1: Gross Salary -->
         <div class="ms-card income">
           <span class="ms-icon">💼</span>
-          <span class="ms-label">Salary & Income</span>
-          <span class="ms-value green" id="msIncome">—</span>
-          <span class="ms-hint" onclick="openAddIncome()" id="msIncomeHint">+ tap to add income</span>
+          <span class="ms-label">Gross Salary</span>
+          <span class="ms-value green" id="msGross">—</span>
+          <span class="ms-pct" id="msTaxLine" style="color:var(--red);">Tax: —</span>
+          <span class="ms-pct" id="msNetLine" style="color:var(--green);">Net: —</span>
+          <span class="ms-hint" onclick="openAddIncome()" id="msIncomeHint">+ add income</span>
         </div>
+        <!-- Card 2: Subsistence & Allowances -->
+        <div class="ms-card" style="border-color:rgba(93,173,226,.25);">
+          <span class="ms-icon">🚗</span>
+          <span class="ms-label">Subsistence & Allowances</span>
+          <span class="ms-value" style="color:#5DADE2;" id="msAllowances">—</span>
+          <span class="ms-pct" id="msAllowHint">travel, site, daily rates</span>
+        </div>
+        <!-- Card 3: Total Spent -->
         <div class="ms-card spent">
           <span class="ms-icon">💸</span>
           <span class="ms-label">Total Spent</span>
           <span class="ms-value red" id="msSpent">—</span>
-          <span class="ms-pct" id="msSpentPct">— of income</span>
+          <span class="ms-pct" id="msSpentPct">— of take-home</span>
         </div>
+        <!-- Card 4: Savings & Investments -->
         <div class="ms-card invested">
           <span class="ms-icon">📈</span>
-          <span class="ms-label">Savings & Investments</span>
+          <span class="ms-label">Saved & Invested</span>
           <span class="ms-value" style="color:var(--yellow);" id="msInvested">—</span>
-          <span class="ms-pct" id="msInvestedPct">— of income</span>
+          <span class="ms-pct" id="msInvestedPct">— of take-home</span>
         </div>
+        <!-- Card 5: Net Remaining -->
         <div class="ms-card remaining">
           <span class="ms-icon">🏦</span>
-          <span class="ms-label">Net Remaining</span>
+          <span class="ms-label">Remaining</span>
           <span class="ms-value" id="msRemaining">—</span>
-          <span class="ms-pct" id="msRemainingPct">— of income</span>
+          <span class="ms-pct" id="msRemainingPct">— of take-home</span>
         </div>
       </div>
       <!-- Visual breakdown bar -->
@@ -541,61 +557,68 @@
 
 <!-- ══ ADD INCOME MODAL ══ -->
 <div id="incomeModal" class="modal-overlay" onclick="closeOut(event,'incomeModal')">
-  <div class="modal-box" style="max-width:480px;">
+  <div class="modal-box" style="max-width:500px;">
     <button class="modal-close" onclick="closeModal('incomeModal')">✕</button>
-    <div class="modal-title">💼 Add Salary / Income</div>
-    <p style="color:var(--muted);font-size:.82rem;margin-bottom:18px;">
-      For <strong id="incomeMonthLabel" style="color:#fff;"></strong>.
-      Enter your <strong style="color:var(--green);">take-home (net) pay</strong> — the amount that actually lands in your bank account after all deductions.
-      Optionally log your tax deductions below to track gross pay too.
-    </p>
+    <div class="modal-title">💼 Add Income — <span id="incomeMonthLabel" style="color:var(--green);font-size:.95rem;"></span></div>
+
     <form onsubmit="submitIncome(event)">
-      <div class="form-row">
-        <div class="form-group">
-          <label>💰 Take-Home (Net) Amount *</label>
-          <input type="number" id="iAmt" placeholder="e.g. 3200.00" step="0.01" min="0" required />
+
+      <!-- ── STEP 1: GROSS SALARY ── -->
+      <div style="background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.18);
+        border-radius:12px;padding:16px;margin-bottom:14px;">
+        <p style="font-size:.75rem;font-weight:700;color:var(--green);text-transform:uppercase;
+          letter-spacing:.07em;margin-bottom:12px;">Step 1 — Gross Salary</p>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>💰 Gross Amount (before tax) *</label>
+            <input type="number" id="iGross" placeholder="e.g. 4500.00"
+              step="0.01" min="0" required oninput="calcNetSalary()" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Currency</label>
+            <select id="iCurr" onchange="calcNetSalary()">
+              <option value="EUR">€ EUR</option>
+              <option value="INR">₹ INR</option>
+              <option value="USD">$ USD</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Currency</label>
-          <select id="iCurr">
-            <option value="EUR">€ EUR</option>
-            <option value="INR">₹ INR</option>
-            <option value="USD">$ USD</option>
-          </select>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Income Type</label>
+            <select id="iCat">
+              <option value="salary">💼 Monthly Salary</option>
+              <option value="freelance">💻 Freelance / Side Income</option>
+              <option value="bonus">🎁 Bonus / Commission / Overtime</option>
+              <option value="business">🏢 Business Income</option>
+              <option value="rental">🏠 Rental Income</option>
+              <option value="investment_return">📈 Investment Returns</option>
+              <option value="misc">📦 Other Income</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Date Received *</label>
+            <input type="date" id="iDate" required />
+          </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label>Income Type</label>
-        <select id="iCat">
-          <option value="salary">💼 Monthly Salary</option>
-          <option value="freelance">💻 Freelance / Side Income</option>
-          <option value="business">🏢 Business Income</option>
-          <option value="rental">🏠 Rental Income</option>
-          <option value="investment_return">📈 Investment Returns / Dividends</option>
-          <option value="bonus">🎁 Bonus / Commission</option>
-          <option value="misc">📦 Other Income</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Date Received *</label>
-          <input type="date" id="iDate" required />
-        </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-top:12px;margin-bottom:0;">
           <label>Note (optional)</label>
-          <input type="text" id="iNote" placeholder="e.g. June salary..." />
+          <input type="text" id="iNote" placeholder="e.g. June 2026 salary, Company XYZ..." />
         </div>
       </div>
 
-      <!-- Tax deductions section — worldwide -->
-      <div style="border-top:1px solid var(--border);margin:14px 0 14px;padding-top:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <p style="color:var(--muted);font-size:.8rem;font-weight:600;">🧾 Tax Deductions (optional)</p>
-          <select id="iTaxCountry" class="import-sel" style="min-width:0;font-size:.78rem;"
+      <!-- ── STEP 2: TAX DEDUCTIONS ── -->
+      <div style="background:rgba(255,107,107,.05);border:1px solid rgba(255,107,107,.18);
+        border-radius:12px;padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;
+          margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <p style="font-size:.75rem;font-weight:700;color:var(--red);text-transform:uppercase;
+            letter-spacing:.07em;">Step 2 — Tax Deductions (optional)</p>
+          <select id="iTaxCountry" class="import-sel" style="min-width:0;font-size:.77rem;"
             onchange="loadTaxTemplate()">
             <option value="IE">🇮🇪 Ireland</option>
             <option value="IN">🇮🇳 India</option>
-            <option value="GB">🇬🇧 United Kingdom</option>
+            <option value="GB">🇬🇧 UK</option>
             <option value="US">🇺🇸 USA</option>
             <option value="AE">🇦🇪 UAE</option>
             <option value="SG">🇸🇬 Singapore</option>
@@ -603,22 +626,64 @@
             <option value="CA">🇨🇦 Canada</option>
             <option value="DE">🇩🇪 Germany</option>
             <option value="NL">🇳🇱 Netherlands</option>
-            <option value="OTHER">🌍 Other Country</option>
+            <option value="OTHER">🌍 Other</option>
           </select>
         </div>
-        <!-- Country note -->
-        <p id="taxCountryNote" style="font-size:.75rem;color:var(--muted);margin-bottom:12px;
-          background:rgba(255,255,255,.04);border-radius:6px;padding:8px 10px;"></p>
-        <!-- Dynamic deduction fields — populated by loadTaxTemplate() -->
+        <p id="taxCountryNote" style="font-size:.73rem;color:var(--muted);margin-bottom:10px;
+          background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px;"></p>
         <div id="taxFields" class="form-row" style="grid-template-columns:1fr 1fr;"></div>
-        <!-- Gross auto-calc -->
-        <div style="background:rgba(0,214,143,.07);border:1px solid rgba(0,214,143,.2);
-          border-radius:8px;padding:10px 14px;font-size:.82rem;margin-top:8px;">
-          Gross Salary = Take-Home + All Deductions = <strong style="color:var(--green);" id="grossCalc">—</strong>
+        <!-- NET take-home auto-calc -->
+        <div style="background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.22);
+          border-radius:8px;padding:10px 14px;font-size:.82rem;margin-top:10px;
+          display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+          <span style="color:var(--muted);">Gross − Deductions = <strong>Net Take-Home</strong></span>
+          <strong style="color:var(--green);font-size:1rem;" id="netCalc">—</strong>
         </div>
       </div>
 
-      <button type="submit" class="btn-primary" id="addIncomeBtn">💼 Save Income Entry</button>
+      <!-- ── STEP 3: SUBSISTENCE & ALLOWANCES ── -->
+      <div style="background:rgba(93,173,226,.06);border:1px solid rgba(93,173,226,.2);
+        border-radius:12px;padding:16px;margin-bottom:16px;">
+        <p style="font-size:.75rem;font-weight:700;color:#5DADE2;text-transform:uppercase;
+          letter-spacing:.07em;margin-bottom:10px;">Step 3 — Subsistence & Allowances (optional)</p>
+        <p style="font-size:.75rem;color:var(--muted);margin-bottom:12px;">
+          Enter any work allowances received on top of salary — these are tracked separately
+          and added to your total available income.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>🍽️ Subsistence / Daily Rate</label>
+            <input type="number" id="iSubsistence" placeholder="0.00" step="0.01" min="0"
+              oninput="calcNetSalary()" />
+          </div>
+          <div class="form-group">
+            <label>🚗 Travel / Mileage Allowance</label>
+            <input type="number" id="iTravel" placeholder="0.00" step="0.01" min="0"
+              oninput="calcNetSalary()" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>🏗️ Site / Location Allowance</label>
+            <input type="number" id="iSite" placeholder="0.00" step="0.01" min="0"
+              oninput="calcNetSalary()" />
+          </div>
+          <div class="form-group">
+            <label>📦 Other Allowance</label>
+            <input type="number" id="iOtherAllow" placeholder="0.00" step="0.01" min="0"
+              oninput="calcNetSalary()" />
+          </div>
+        </div>
+        <!-- Total available income summary -->
+        <div style="background:rgba(93,173,226,.1);border:1px solid rgba(93,173,226,.25);
+          border-radius:8px;padding:10px 14px;font-size:.82rem;margin-top:6px;
+          display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+          <span style="color:var(--muted);">Net Take-Home + All Allowances = <strong>Total Available</strong></span>
+          <strong style="color:#5DADE2;font-size:1rem;" id="totalAvailCalc">—</strong>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="addIncomeBtn">💼 Save All Entries</button>
     </form>
   </div>
 </div>
@@ -911,10 +976,11 @@ async function loadAll() {
 // ════════════════════════════════════════
 // FILTER HELPERS
 // ════════════════════════════════════════
-function mExp() { // expenses for current month (non-income, non-tax)
+const NON_EXPENSE_TYPES = ['income','tax','allowance'];
+function mExp() { // expenses for current month only (no income/tax/allowance)
   return expenses.filter(e => {
     const {m,y} = dateOf(e.date);
-    return m===cm && y===cy && e.type!=='income' && e.type!=='tax';
+    return m===cm && y===cy && !NON_EXPENSE_TYPES.includes(e.type);
   });
 }
 function mAll() { // ALL entries this month including income and tax
@@ -944,29 +1010,36 @@ function renderMonthlySummary() {
   // All entries this month — using safe dateOf() parser
   const allMonth = mAll();
 
-  // Income = type 'income'
-  const incomeEntries = allMonth.filter(e => e.type === 'income');
-  const income = incomeEntries.reduce((a, e) => a + Number(e.amount), 0);
+  // Gross income = type 'income' (stored as gross now)
+  const incomeEntries  = allMonth.filter(e => e.type === 'income');
+  const grossIncome    = incomeEntries.reduce((a,e) => a + Number(e.amount), 0);
 
   // Tax deductions = type 'tax'
   const taxEntries = allMonth.filter(e => e.type === 'tax');
-  const totalTax = taxEntries.reduce((a, e) => a + Number(e.amount), 0);
+  const totalTax   = taxEntries.reduce((a,e) => a + Number(e.amount), 0);
 
-  // Gross income = income + tax (since tax was deducted from gross)
-  const grossIncome = income + totalTax;
+  // Net take-home = gross - tax
+  const netIncome = grossIncome - totalTax;
 
-  // Invested = category 'savings'
+  // Allowances = type 'allowance' (subsistence, travel, site, etc.)
+  const allowanceEntries = allMonth.filter(e => e.type === 'allowance');
+  const totalAllowances  = allowanceEntries.reduce((a,e) => a + Number(e.amount), 0);
+
+  // Total available = net + allowances
+  const totalAvailable = netIncome + totalAllowances;
+
+  // Invested = expenses in savings category
   const invested = allMonth
-    .filter(e => e.type !== 'income' && e.type !== 'tax' && e.category === 'savings')
-    .reduce((a, e) => a + Number(e.amount), 0);
+    .filter(e => !['income','tax','allowance'].includes(e.type) && e.category === 'savings')
+    .reduce((a,e) => a + Number(e.amount), 0);
 
-  // Spent = all expenses except savings/investment and tax
+  // Spent = all regular expenses (not income/tax/allowance, not savings)
   const spent = allMonth
-    .filter(e => e.type !== 'income' && e.type !== 'tax' && e.category !== 'savings')
-    .reduce((a, e) => a + Number(e.amount), 0);
+    .filter(e => !['income','tax','allowance'].includes(e.type) && e.category !== 'savings')
+    .reduce((a,e) => a + Number(e.amount), 0);
 
-  // Income list with delete buttons
-  renderIncomeList(incomeEntries, taxEntries, s);
+  // Show income/tax/allowance list with delete buttons
+  renderIncomeList([...incomeEntries, ...taxEntries, ...allowanceEntries], [], s);
 
   // Remaining = income - spent - invested
   const remaining = income - spent - invested;
@@ -977,34 +1050,52 @@ function renderMonthlySummary() {
   document.getElementById('incomeMonthLabel').textContent =
     `${MONTHS[cm]} ${cy}`;
 
-  // Update cards
-  document.getElementById('msIncome').textContent =
-    income > 0 ? `${s}${fmt(income)}` : '—';
+  const remaining = totalAvailable - spent - invested;
+  const base = totalAvailable > 0 ? totalAvailable : 1; // avoid division by zero
+
+  // Card 1: Gross Salary
+  document.getElementById('msGross').textContent =
+    grossIncome > 0 ? `${s}${fmt(grossIncome)}` : '—';
+  document.getElementById('msTaxLine').textContent =
+    totalTax > 0 ? `Tax: −${s}${fmt(totalTax)}` : totalTax === 0 && grossIncome > 0 ? 'No deductions logged' : '';
+  document.getElementById('msNetLine').textContent =
+    netIncome > 0 ? `Net: ${s}${fmt(netIncome)}` : '';
   document.getElementById('msIncomeHint').textContent =
-    income > 0
-      ? `${incomeEntries.length} entr${incomeEntries.length===1?'y':'ies'} · tap to add more`
+    grossIncome > 0
+      ? `${incomeEntries.length} entr${incomeEntries.length===1?'y':'ies'} · add more`
       : '+ tap to add income';
 
+  // Card 2: Allowances
+  document.getElementById('msAllowances').textContent =
+    totalAllowances > 0 ? `+${s}${fmt(totalAllowances)}` : '—';
+  document.getElementById('msAllowHint').textContent =
+    allowanceEntries.length > 0
+      ? `${allowanceEntries.length} allowance entr${allowanceEntries.length===1?'y':'ies'}`
+      : 'subsistence, travel, site';
+
+  // Card 3: Spent
   document.getElementById('msSpent').textContent = `${s}${fmt(spent)}`;
   document.getElementById('msSpentPct').textContent =
-    income > 0 ? `${((spent/income)*100).toFixed(1)}% of income` : 'add income to see %';
+    totalAvailable > 0 ? `${((spent/base)*100).toFixed(1)}% of available` : 'add income to see %';
 
+  // Card 4: Invested
   document.getElementById('msInvested').textContent = `${s}${fmt(invested)}`;
   document.getElementById('msInvestedPct').textContent =
-    income > 0 ? `${((invested/income)*100).toFixed(1)}% of income` : 'add income to see %';
+    totalAvailable > 0 ? `${((invested/base)*100).toFixed(1)}% of available` : 'add income to see %';
 
+  // Card 5: Remaining
   const remEl = document.getElementById('msRemaining');
-  remEl.textContent = income > 0 ? `${s}${fmt(Math.abs(remaining))}` : '—';
+  remEl.textContent = totalAvailable > 0 ? `${s}${fmt(Math.abs(remaining))}` : '—';
   remEl.className = 'ms-value ' + (remaining < 0 ? 'red' : 'green');
   document.getElementById('msRemainingPct').textContent =
-    income > 0
-      ? (remaining < 0 ? '⚠️ Over income!' : `${((remaining/income)*100).toFixed(1)}% remaining`)
+    totalAvailable > 0
+      ? (remaining < 0 ? '⚠️ Over budget!' : `${((remaining/base)*100).toFixed(1)}% left`)
       : 'add income to see';
 
-  // Breakdown bar
-  if(income > 0) {
-    const spentPct    = Math.min((spent/income)*100, 100);
-    const investedPct = Math.min((invested/income)*100, Math.max(0, 100-spentPct));
+  // Breakdown bar — based on total available (net + allowances)
+  if(totalAvailable > 0) {
+    const spentPct    = Math.min((spent/base)*100, 100);
+    const investedPct = Math.min((invested/base)*100, Math.max(0, 100-spentPct));
     const remainPct   = Math.max(0, 100 - spentPct - investedPct);
     document.getElementById('msBarSpent').style.width     = spentPct    + '%';
     document.getElementById('msBarInvested').style.width  = investedPct + '%';
@@ -1069,29 +1160,52 @@ function openAddIncome() {
   const pad = n => String(n).padStart(2,'0');
   document.getElementById('iDate').value = `${cy}-${pad(cm+1)}-01`;
   document.getElementById('iCurr').value = currency;
+  document.getElementById('incomeMonthLabel').textContent = `${MONTHS[cm]} ${cy}`;
 
   // Restore saved country or default to Ireland
   const saved = localStorage.getItem('finiq_country') || 'IE';
   document.getElementById('iTaxCountry').value = saved;
-  loadTaxTemplate(); // populate fields for the saved country
+  loadTaxTemplate();
 
   document.getElementById('incomeModal').style.display = 'flex';
 }
 
-// Live gross = net + all deduction fields
-function updateGrossCalc() {
-  const net = parseFloat(document.getElementById('iAmt')?.value) || 0;
-  const sym = SYM[document.getElementById('iCurr')?.value || currency];
+// Live calculator: Gross → minus tax → Net → plus allowances → Total Available
+function calcNetSalary() {
+  const gross = parseFloat(document.getElementById('iGross')?.value) || 0;
+  const sym   = SYM[document.getElementById('iCurr')?.value || currency];
   const country = document.getElementById('iTaxCountry')?.value || 'IE';
-  const tmpl = TAX_TEMPLATES[country];
-  const ded = tmpl
-    ? tmpl.deductions.reduce((a,d)=>{
-        return a + (parseFloat(document.getElementById('val_'+d.id)?.value)||0);
-      }, 0)
+  const tmpl  = TAX_TEMPLATES[country];
+
+  const totalTax = tmpl
+    ? tmpl.deductions.reduce((a,d) =>
+        a + (parseFloat(document.getElementById('val_'+d.id)?.value)||0), 0)
     : 0;
-  const el = document.getElementById('grossCalc');
-  if(el) el.textContent = net+ded > 0 ? `${sym}${fmt(net+ded)}` : '—';
+
+  const net = gross - totalTax;
+
+  const allowances =
+    (parseFloat(document.getElementById('iSubsistence')?.value)||0) +
+    (parseFloat(document.getElementById('iTravel')?.value)||0) +
+    (parseFloat(document.getElementById('iSite')?.value)||0) +
+    (parseFloat(document.getElementById('iOtherAllow')?.value)||0);
+
+  const totalAvail = net + allowances;
+
+  const netEl   = document.getElementById('netCalc');
+  const totalEl = document.getElementById('totalAvailCalc');
+
+  if(netEl) {
+    netEl.textContent   = net > 0 ? `${sym}${fmt(net)}` : '—';
+    netEl.style.color   = net < 0 ? 'var(--red)' : 'var(--green)';
+  }
+  if(totalEl) {
+    totalEl.textContent = totalAvail > 0 ? `${sym}${fmt(totalAvail)}` : '—';
+  }
 }
+
+// Keep updateGrossCalc as alias (called by loadTaxTemplate)
+function updateGrossCalc() { calcNetSalary(); }
 
 async function submitIncome(ev) {
   ev.preventDefault();
@@ -1105,78 +1219,100 @@ async function submitIncome(ev) {
   const country = document.getElementById('iTaxCountry').value;
   const tmpl    = TAX_TEMPLATES[country];
 
+  const grossAmt = parseFloat(document.getElementById('iGross').value);
+  if(!grossAmt || grossAmt <= 0) {
+    alert('Please enter a gross amount greater than 0.');
+    btn.textContent = '💼 Save All Entries'; btn.disabled = false; return;
+  }
+
   const inserts = [];
 
-  // Main income entry (net take-home)
-  const netAmt = parseFloat(document.getElementById('iAmt').value);
-  if(!netAmt || netAmt <= 0) {
-    alert('Please enter a take-home amount greater than 0.');
-    btn.textContent = '💼 Save Income Entry'; btn.disabled = false; return;
-  }
+  // 1. Gross salary income entry
   inserts.push({
-    user_id: user.id, amount: netAmt,
+    user_id: user.id, amount: grossAmt,
     category: cat, currency: curr, date,
-    note: note || 'Take-home pay', type: 'income',
+    note: note || `${MONTHS[cm]} ${cy} — Gross Salary`,
+    type: 'income',
   });
 
-  // Tax deduction entries — read from dynamic fields
+  // 2. Tax deduction entries
   if(tmpl) {
     tmpl.deductions.forEach(d => {
       const val   = parseFloat(document.getElementById('val_'+d.id)?.value) || 0;
       const label = document.getElementById('lbl_'+d.id)?.value || d.label;
       if(val > 0) inserts.push({
         user_id: user.id, amount: val,
-        category: 'tax_' + d.id, currency: curr, date,
+        category: 'tax_'+d.id, currency: curr, date,
         note: label, type: 'tax',
       });
     });
   }
 
+  // 3. Subsistence & allowances entries
+  const allowances = [
+    { id:'iSubsistence', label:'Subsistence / Daily Rate',   cat:'subsistence' },
+    { id:'iTravel',      label:'Travel / Mileage Allowance', cat:'travel_allow' },
+    { id:'iSite',        label:'Site / Location Allowance',  cat:'site_allow' },
+    { id:'iOtherAllow',  label:'Other Allowance',            cat:'other_allow' },
+  ];
+  allowances.forEach(a => {
+    const val = parseFloat(document.getElementById(a.id)?.value) || 0;
+    if(val > 0) inserts.push({
+      user_id: user.id, amount: val,
+      category: a.cat, currency: curr, date,
+      note: a.label, type: 'allowance',
+    });
+  });
+
   const { error } = await db.from('expenses').insert(inserts);
-  btn.textContent = '💼 Save Income Entry'; btn.disabled = false;
+  btn.textContent = '💼 Save All Entries'; btn.disabled = false;
   if(error) { alert('Error: ' + error.message); return; }
   closeModal('incomeModal'); ev.target.reset();
-  loadTaxTemplate(); // reset dynamic fields
-  document.getElementById('grossCalc').textContent = '—';
+  loadTaxTemplate();
+  ['netCalc','totalAvailCalc'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.textContent='—';
+  });
   await loadAll();
 }
 
 // ════════════════════════════════════════
 // INCOME LIST (with delete)
 // ════════════════════════════════════════
-function renderIncomeList(incomeEntries, taxEntries, s) {
+function renderIncomeList(allEntries, _unused, s) {
   const container = document.getElementById('incomeList');
   if(!container) return;
-
-  const allEntries = [...incomeEntries, ...taxEntries];
   if(!allEntries.length) { container.innerHTML = ''; return; }
 
-  const totalTax = taxEntries.reduce((a,e)=>a+Number(e.amount),0);
-  const totalIncome = incomeEntries.reduce((a,e)=>a+Number(e.amount),0);
+  const typeConfig = {
+    income:    { icon:'💼', label:'Gross Income',     color:'var(--green)' },
+    tax:       { icon:'🧾', label:'Tax Deduction',    color:'var(--red)' },
+    allowance: { icon:'🚗', label:'Allowance',         color:'#5DADE2' },
+  };
 
   container.innerHTML = `
     <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:12px;">
-      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;
-        letter-spacing:.05em;margin-bottom:8px;">
-        Income & Deduction Entries — ${MONTHS[cm]} ${cy}
-        ${totalTax>0 ? `<span style="margin-left:12px;color:var(--muted);">Gross: ${s}${fmt(totalIncome+totalTax)} → Net: ${s}${fmt(totalIncome)} → Tax: ${s}${fmt(totalTax)}</span>` : ''}
+      <div style="font-size:.73rem;color:var(--muted);font-weight:600;text-transform:uppercase;
+        letter-spacing:.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span>${MONTHS[cm]} ${cy} — All Entries</span>
+        <span style="color:var(--muted);font-weight:400;font-size:.7rem;">Click 🗑 to delete</span>
       </div>
       ${allEntries.map(e => {
-        const isTax = e.type === 'tax';
+        const cfg = typeConfig[e.type] || { icon:'📦', label:e.type, color:'var(--muted)' };
+        const isNeg = e.type === 'tax';
         return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;
-          background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:6px;">
-          <span style="font-size:1rem;">${isTax ? '🧾' : '💼'}</span>
-          <div style="flex:1;">
-            <div style="font-size:.82rem;font-weight:600;color:#fff;">${e.note || e.category}</div>
-            <div style="font-size:.72rem;color:var(--muted);">${e.date} · ${isTax?'Tax Deduction':'Income'}</div>
+          background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:5px;">
+          <span style="font-size:1rem;">${cfg.icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.82rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.note || e.category}</div>
+            <div style="font-size:.7rem;color:var(--muted);">${e.date} · ${cfg.label}</div>
           </div>
-          <div style="font-size:.88rem;font-weight:700;color:${isTax?'var(--red)':'var(--green)'};">
-            ${isTax?'-':'+'}${SYM[e.currency]||s}${fmt(e.amount)}
+          <div style="font-size:.88rem;font-weight:700;color:${cfg.color};flex-shrink:0;">
+            ${isNeg?'−':'+'}${SYM[e.currency]||s}${fmt(e.amount)}
           </div>
           <button onclick="delExp('${e.id}')"
             style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;
-            padding:4px 6px;border-radius:6px;"
-            title="Delete this entry">🗑</button>
+            padding:4px 6px;border-radius:6px;flex-shrink:0;"
+            title="Delete">🗑</button>
         </div>`;
       }).join('')}
     </div>
@@ -1254,7 +1390,7 @@ function renderBar() {
     labels.push(MONTHS[m].slice(0,3));
     totals.push(expenses.filter(e=>{
       const {m:em,y:ey}=dateOf(e.date);
-      return em===m&&ey===y&&e.type!=='income'&&e.type!=='tax';
+      return em===m&&ey===y&&!NON_EXPENSE_TYPES.includes(e.type);
     }).reduce((a,e)=>a+Number(e.amount),0));
   }
   if(barInst) barInst.destroy();
@@ -1395,11 +1531,11 @@ function renderReports() {
 
   // Annual total (top-right of chart)
   const annualSpend = expenses
-    .filter(e => dateOf(e.date).y===ry && e.type!=='income' && e.type!=='tax')
+    .filter(e => dateOf(e.date).y===ry && !NON_EXPENSE_TYPES.includes(e.type))
     .reduce((a,e)=>a+Number(e.amount),0);
   const monthsWithData = [...new Set(
     expenses
-      .filter(e => dateOf(e.date).y===ry && e.type!=='income' && e.type!=='tax')
+      .filter(e => dateOf(e.date).y===ry && !NON_EXPENSE_TYPES.includes(e.type))
       .map(e => dateOf(e.date).m)
   )].length || 1;
   document.getElementById('annualTotal').textContent = `${s}${fmt(annualSpend)}`;
@@ -1426,7 +1562,7 @@ function renderReports() {
   });
   // Yearly category breakdown
   const ct={};
-  expenses.filter(e=>dateOf(e.date).y===ry&&e.type!=='income'&&e.type!=='tax')
+  expenses.filter(e=>dateOf(e.date).y===ry&&!NON_EXPENSE_TYPES.includes(e.type))
     .forEach(e=>{ct[e.category]=(ct[e.category]||0)+Number(e.amount);});
   const yrTotal=Object.values(ct).reduce((a,v)=>a+v,0);
   const yr=document.getElementById('yrCatBreak');
