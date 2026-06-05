@@ -1275,12 +1275,8 @@
         return;
       }
 
-      // Show the success view
-      document.getElementById('signupView').style.display = 'none';
-      document.getElementById('successView').style.display = 'block';
-
-      // Update the nav to show the user is logged in
-      updateNavLoggedIn(name || email);
+      // Redirect to dashboard
+      window.location.href = 'dashboard.html';
     }
 
     // LOG IN — signs in an existing user
@@ -1305,9 +1301,7 @@
         return;
       }
 
-      closeAuthModal();
-      const name = data.user.user_metadata?.full_name || data.user.email;
-      updateNavLoggedIn(name);
+      window.location.href = 'dashboard.html';
     }
 
     // LOG OUT
@@ -1325,12 +1319,9 @@
       `;
     }
 
-    // On page load — check if user is already logged in
+    // On page load — if already logged in, go straight to dashboard
     db.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        const name = session.user.user_metadata?.full_name || session.user.email;
-        updateNavLoggedIn(name);
-      }
+      if (session) window.location.href = 'dashboard.html';
     });
 
   </script>
