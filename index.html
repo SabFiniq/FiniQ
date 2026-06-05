@@ -883,8 +883,18 @@
     </div>
   </footer>
 
+  <!-- ===== SUPABASE SDK ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- ===== JAVASCRIPT ===== -->
   <script>
+    // --- Supabase setup ---
+    // This connects your website to your Supabase database
+    const { createClient } = supabase
+    const db = createClient(
+      'https://uegsgxqedvwqhqivvqzj.supabase.co',
+      'sb_publishable_3lznlasCdaPKjJjqPbbEkA_Q_Fbcrav'
+    )
     // --- Scroll fade-in animations ---
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
@@ -918,9 +928,42 @@
     }
 
     // --- Feedback form ---
-    function submitFeedback(e) {
+    // This function runs when user clicks "Send Feedback"
+    // It saves the data to your Supabase database
+    async function submitFeedback(e) {
       e.preventDefault();
-      document.getElementById('feedbackForm').style.display = 'none';
+
+      // Get what the user typed in the form
+      const form = document.getElementById('feedbackForm');
+      const inputs = form.querySelectorAll('input, textarea');
+      const name    = inputs[0].value.trim();
+      const email   = inputs[1].value.trim();
+      const message = inputs[2].value.trim();
+
+      // Show a loading state on the button
+      const btn = form.querySelector('button[type="submit"]');
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      // Save to Supabase "feedback" table
+      const { error } = await db.from('feedback').insert({
+        name:    name,
+        email:   email,
+        message: message,
+        rating:  selectedRating || null
+      });
+
+      if (error) {
+        // Something went wrong — show an error message
+        btn.textContent = 'Send Feedback →';
+        btn.disabled = false;
+        alert('Sorry, something went wrong. Please try again in a moment.');
+        console.error('Supabase error:', error.message);
+        return;
+      }
+
+      // Success — hide the form, show thank you message
+      form.style.display = 'none';
       document.getElementById('formSuccess').style.display = 'block';
     }
 
