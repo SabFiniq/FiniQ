@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO Meta Tags -->
+  <title>FiniQ — Track. Save. Invest. Repeat.</title>
+  <meta name="description" content="FiniQ is your all-in-one personal finance dashboard. Track expenses, monitor savings, and follow live stock markets — all in one place. Free to start." />
+  <meta name="keywords" content="personal finance, expense tracker, stock market, budget tracker, NRI finance, Indian diaspora finance, finance dashboard" />
+  <meta name="author" content="FiniQ" />
+
+  <!-- Open Graph (for sharing on WhatsApp, LinkedIn, Twitter) -->
+  <meta property="og:title" content="FiniQ — Track. Save. Invest. Repeat." />
+  <meta property="og:description" content="Your all-in-one personal finance dashboard. Track expenses, savings goals, and live stocks — free to start." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://finiq.vercel.app" />
+  <meta property="og:image" content="https://finiq.vercel.app/og-image.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FiniQ — Track. Save. Invest. Repeat." />
+  <meta name="twitter:description" content="Your all-in-one personal finance dashboard. Free to start." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #070E1A;
+      color: #E8EDF5;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+
+    /* ===== CSS VARIABLES ===== */
+    :root {
+      --navy:      #070E1A;
+      --navy-mid:  #0D1B2E;
+      --navy-card: #112240;
+      --green:     #00D68F;
+      --green-dark:#00A86B;
+      --white:     #FFFFFF;
+      --muted:     #8892A4;
+      --border:    #1C2E45;
+    }
+
+    /* ===== UTILITY ===== */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    .section { padding: 80px 0; }
+    .section-label {
+      display: inline-block;
+      background: rgba(0, 214, 143, 0.12);
+      color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 14px;
+      line-height: 1.25;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 540px;
+    }
+    .section-header { margin-bottom: 52px; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-block;
+      padding: 13px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--green);
+      color: #070E1A;
+    }
+    .btn-primary:hover { background: #00F0A0; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--white);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+    /* ===== NAV ===== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 16px 20px;
+      background: rgba(7, 14, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.02em;
+    }
+    .logo span { color: var(--green); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.9rem;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta { display: flex; gap: 10px; align-items: center; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+
+    /* ===== HERO ===== */
+    #hero {
+      padding: 140px 0 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(0,214,143,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,214,143,0.1);
+      border: 1px solid rgba(0,214,143,0.25);
+      color: var(--green);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero-badge::before { content: '✦'; font-size: 0.7rem; }
+    .hero-title {
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .hero-title .highlight { color: var(--green); }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--muted);
+      max-width: 540px;
+      margin: 0 auto 36px;
+    }
+    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .hero-note {
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .hero-note span { color: var(--green); }
+
+    /* Three hero feature cards */
+    .hero-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 60px;
+      text-align: left;
+    }
+    .hero-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .hero-card:hover { border-color: var(--green); transform: translateY(-3px); }
+    .hero-card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+    }
+    .hero-card h3 { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .hero-card p { font-size: 0.85rem; color: var(--muted); }
+    .hero-card .stat {
+      margin-top: 14px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--green);
+    }
+    .hero-card .stat-label { font-size: 0.75rem; color: var(--muted); }
+
+    /* ===== SOCIAL PROOF BAR ===== */
+    .social-proof {
+      padding: 28px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .social-proof p { font-size: 0.85rem; color: var(--muted); }
+    .social-proof strong { color: var(--white); }
+
+    /* ===== FEATURES ===== */
+    #features { background: var(--navy-mid); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { border-color: var(--green); transform: translateY(-4px); }
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: rgba(0,214,143,0.12);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .feature-card p { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; }
+    .feature-list { list-style: none; }
+    .feature-list li {
+      font-size: 0.85rem;
+      color: var(--muted);
+      padding: 4px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .feature-list li::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+    /* ===== HOW IT WORKS ===== */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+    .step { text-align: center; padding: 24px; }
+    .step-number {
+      width: 48px; height: 48px;
+      background: var(--green);
+      color: var(--navy);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem;
+      margin: 0 auto 16px;
+    }
+    .step h3 { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+    .step p { font-size: 0.85rem; color: var(--muted); }
+
+    /* ===== PRICING ===== */
+    #pricing { background: var(--navy-mid); }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 700px; margin: 0 auto; }
+    .pricing-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 36px;
+      position: relative;
+    }
+    .pricing-card.popular { border-color: var(--green); }
+    .popular-badge {
+      position: absolute;
+      top: -13px; left: 50%; transform: translateX(-50%);
+      background: var(--green);
+      color: var(--navy);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 16px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .pricing-name { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .pricing-price { font-size: 2.8rem; font-weight: 800; color: var(--white); line-height: 1; margin-bottom: 4px; }
+    .pricing-price span { font-size: 1rem; font-weight: 400; color: var(--muted); }
+    .pricing-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; }
+    .pricing-features { list-style: none; margin-bottom: 28px; }
+    .pricing-features li {
+      font-size: 0.88rem;
+      color: var(--muted);
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pricing-features li:last-child { border-bottom: none; }
+    .pricing-features li .check { color: var(--green); font-weight: 700; }
+    .pricing-features li .cross { color: #444; }
+    .pricing-card .btn { width: 100%; text-align: center; }
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .testimonial-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+    }
+    .stars { color: #F5C518; font-size: 0.9rem; margin-bottom: 12px; letter-spacing: 2px; }
+    .testimonial-text { font-size: 0.9rem; color: var(--muted); margin-bottom: 20px; line-height: 1.7; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .author-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem;
+      background: rgba(0,214,143,0.15);
+      color: var(--green);
+      flex-shrink: 0;
+    }
+    .author-name { font-size: 0.9rem; font-weight: 600; color: var(--white); }
+    .author-role { font-size: 0.78rem; color: var(--muted); }
+
+    /* ===== FAQ ===== */
+    #faq { background: var(--navy-mid); }
+    .faq-list { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 20px 24px;
+      text-align: left;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--white);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .faq-arrow { font-size: 1rem; color: var(--green); transition: transform 0.2s; flex-shrink: 0; }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 0.88rem;
+      color: var(--muted);
+      padding: 0 24px;
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-answer { max-height: 200px; padding: 0 24px 20px; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+    /* ===== FEEDBACK ===== */
+    .feedback-wrap {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 40px;
+    }
+    .feedback-wrap h3 { font-size: 1.2rem; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .feedback-wrap p { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
+    .star-rating { display: flex; gap: 8px; margin-bottom: 20px; }
+    .star-rating span {
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: var(--border);
+      transition: color 0.15s;
+    }
+    .star-rating span.active, .star-rating span:hover { color: #F5C518; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: var(--green); }
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* ===== CTA BANNER ===== */
+    .cta-banner {
+      background: linear-gradient(135deg, #0D2B1F 0%, #0D1B2E 100%);
+      border: 1px solid rgba(0,214,143,0.2);
+      border-radius: 20px;
+      padding: 60px 40px;
+      text-align: center;
+      margin: 0 20px;
+    }
+    .cta-banner h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 800; color: var(--white); margin-bottom: 14px; }
+    .cta-banner p { color: var(--muted); margin-bottom: 28px; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: var(--navy-mid);
+      border-top: 1px solid var(--border);
+      padding: 48px 0 28px;
+    }
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+    .footer-brand .logo { font-size: 1.3rem; margin-bottom: 12px; }
+    .footer-brand p { font-size: 0.85rem; color: var(--muted); max-width: 240px; }
+    .footer-col h4 { font-size: 0.85rem; font-weight: 700; color: var(--white); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-col ul li a { font-size: 0.85rem; color: var(--muted); transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--green); }
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-bottom p { font-size: 0.8rem; color: var(--muted); }
+    .footer-bottom a { color: var(--green); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .nav-links, .nav-cta { display: none; }
+      .nav-hamburger { display: flex; }
+      .hero-cards { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .cta-banner { padding: 40px 24px; margin: 0 10px; }
+      .feedback-wrap { padding: 28px 20px; }
+    }
+    @media (max-width: 480px) {
+      .section { padding: 60px 0; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+    }
+
+    /* ===== SCROLL ANIMATION ===== */
+    .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== NAVIGATION ===== -->
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">Fini<span>Q</span></div>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How it Works</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#feedback">Feedback</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="#" class="btn btn-outline" style="padding:10px 20px;font-size:0.85rem;">Log In</a>
+        <a href="#" class="btn btn-primary" style="padding:10px 20px;font-size:0.85rem;">Start Free</a>
+      </div>
+      <div class="nav-hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section id="hero">
+    <div class="container">
+      <div class="hero-badge">Now in Beta — Join Free Today</div>
+      <h1 class="hero-title">
+        Track. Save. Invest.<br />
+        <span class="highlight">Repeat.</span>
+      </h1>
+      <p class="hero-sub">
+        FiniQ is your all-in-one personal finance dashboard — track every expense,
+        grow your savings, and monitor live stock markets. Built for global Indians and professionals worldwide.
+      </p>
+      <div class="hero-buttons">
+        <a href="#" class="btn btn-primary">🚀 Start for Free</a>
+        <a href="#pricing" class="btn btn-outline">View Pricing</a>
+      </div>
+      <p class="hero-note">No credit card needed. <span>100% free</span> to get started.</p>
+
+      <!-- Three feature preview cards -->
+      <div class="hero-cards fade-in">
+        <div class="hero-card">
+          <div class="hero-card-icon">💸</div>
+          <h3>Expense Monitor</h3>
+          <p>Log expenses in EUR, INR, USD or any currency. Visualise spending by category.</p>
+          <div class="stat">₹ ↔ €</div>
+          <div class="stat-label">Multi-currency support</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon">📊</div>
+          <h3>Finance Dashboard</h3>
+          <p>Track your net worth, savings goals, income vs. spending — all in real time.</p>
+          <div class="stat">360°</div>
+          <div class="stat-label">Full financial picture</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon">📈</div>
+          <h3>Live Stock Reports</h3>
+          <p>Monitor NSE, BSE, US, and European stocks. Build your personal watchlist.</p>
+          <div class="stat">Live</div>
+          <div class="stat-label">Real-time market data</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SOCIAL PROOF ===== -->
+  <div class="social-proof">
+    <div class="container">
+      <p>Trusted by <strong>professionals in Ireland, UK, USA, Germany and India</strong> — manage money across borders with confidence.</p>
+    </div>
+  </div>
+
+  <!-- ===== FEATURES ===== -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Everything your finances need,<br />nothing they don't</h2>
+        <p class="section-sub">FiniQ brings your entire financial life into one clean, simple dashboard. No spreadsheets. No confusion.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <div class="feature-icon">💸</div>
+          <h3>Smart Expense Monitor</h3>
+          <p>Log, categorise, and understand where your money goes every month — in any currency.</p>
+          <ul class="feature-list">
+            <li>Log expenses in EUR, INR, USD, GBP</li>
+            <li>Category breakdown with pie charts</li>
+            <li>Set monthly budgets and get alerts</li>
+            <li>Export your data to CSV anytime</li>
+          </ul>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">📊</div>
+          <h3>Personal Finance Dashboard</h3>
+          <p>See your full financial picture — income, savings, goals, and net worth — updated daily.</p>
+          <ul class="feature-list">
+            <li>Net worth tracker (assets vs liabilities)</li>
+            <li>Savings goal progress bars</li>
+            <li>Income vs. spending overview</li>
+            <li>Monthly financial health score</li>
+          </ul>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">📈</div>
+          <h3>Live Stock Reports</h3>
+          <p>Track NSE, BSE, US, and European stocks live. Build your personal watchlist and portfolio.</p>
+          <ul class="feature-list">
+            <li>Real-time prices for NSE, BSE, NYSE</li>
+            <li>Personal stock watchlist</li>
+            <li>Portfolio value tracker</li>
+            <li>Basic market news feed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section id="how-it-works" class="section" style="background:var(--navy-mid);">
+    <div class="container">
+      <div class="section-header fade-in" style="text-align:center;">
+        <div class="section-label">How It Works</div>
+        <h2 class="section-title">Up and running in 3 minutes</h2>
+        <p class="section-sub" style="margin:0 auto;">No complicated setup. No manual to read. Just sign up and start.</p>
+      </div>
+      <div class="steps">
+        <div class="step fade-in">
+          <div class="step-number">1</div>
+          <h3>Create a Free Account</h3>
+          <p>Sign up with your email in 30 seconds. No credit card needed. Ever.</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">2</div>
+          <h3>Connect Your Data</h3>
+          <p>Add your income, expenses, savings, and stock watchlist manually or via import.</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">3</div>
+          <h3>See Your Full Picture</h3>
+          <p>Your personalised finance dashboard is ready. Track progress every single day.</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">4</div>
+          <h3>Grow With Premium</h3>
+          <p>Unlock live stocks, unlimited history, and advanced analytics when you're ready.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section id="pricing" class="section">
+    <div class="container">
+      <div class="section-header fade-in" style="text-align:center;">
+        <div class="section-label">Pricing</div>
+        <h2 class="section-title">Simple, honest pricing</h2>
+        <p class="section-sub" style="margin:0 auto;">Start free, upgrade when you're ready. No hidden fees. Cancel any time.</p>
+      </div>
+      <div class="pricing-grid fade-in">
+        <!-- Free -->
+        <div class="pricing-card">
+          <div class="pricing-name">Free</div>
+          <div class="pricing-price">€0 <span>/ month</span></div>
+          <p class="pricing-desc">Everything you need to get started with your finances.</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Expense tracking (up to 50/month)</li>
+            <li><span class="check">✓</span> Basic finance dashboard</li>
+            <li><span class="check">✓</span> 3 savings goals</li>
+            <li><span class="check">✓</span> 5-stock watchlist</li>
+            <li><span class="cross">✗</span> Live stock prices</li>
+            <li><span class="cross">✗</span> Unlimited expense history</li>
+            <li><span class="cross">✗</span> Multi-currency support</li>
+            <li><span class="cross">✗</span> Data export (CSV)</li>
+          </ul>
+          <a href="#" class="btn btn-outline">Get Started Free</a>
+        </div>
+        <!-- Premium -->
+        <div class="pricing-card popular">
+          <div class="popular-badge">Most Popular</div>
+          <div class="pricing-name">Premium</div>
+          <div class="pricing-price">€9 <span>/ month</span></div>
+          <p class="pricing-desc">Full access to every FiniQ tool. For serious financial growers.</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> Unlimited expense tracking</li>
+            <li><span class="check">✓</span> Advanced finance dashboard</li>
+            <li><span class="check">✓</span> Unlimited savings goals</li>
+            <li><span class="check">✓</span> Live stock prices (NSE, BSE, US)</li>
+            <li><span class="check">✓</span> Full stock portfolio tracker</li>
+            <li><span class="check">✓</span> Multi-currency (INR, EUR, USD, GBP)</li>
+            <li><span class="check">✓</span> Data export (CSV)</li>
+            <li><span class="check">✓</span> Priority support</li>
+          </ul>
+          <a href="#" class="btn btn-primary">Start 14-Day Free Trial</a>
+        </div>
+      </div>
+      <p style="text-align:center;color:var(--muted);font-size:0.82rem;margin-top:20px;">
+        🔒 Payments secured by Stripe. Cancel any time from your account settings.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIALS ===== -->
+  <section id="testimonials" class="section" style="background:var(--navy-mid);">
+    <div class="container">
+      <div class="section-header fade-in" style="text-align:center;">
+        <div class="section-label">Testimonials</div>
+        <h2 class="section-title">What our users are saying</h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card fade-in">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"Finally an app that understands I manage money in both INR and EUR. FiniQ makes it so simple to see everything in one place. I cancelled three other apps after this."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">PK</div>
+            <div>
+              <div class="author-name">Priya K.</div>
+              <div class="author-role">Software Engineer · Dublin, Ireland</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card fade-in">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"The stock watchlist for NSE and US markets together is a game changer. I used to switch between 4 different apps. Now it's all in FiniQ. Super clean UI too."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">RV</div>
+            <div>
+              <div class="author-name">Rahul V.</div>
+              <div class="author-role">Retail Investor · London, UK</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card fade-in">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"I set my monthly budget and FiniQ tells me exactly how much I have left. It took me 5 minutes to set up. I've already started saving €200 more per month!"</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">AM</div>
+            <div>
+              <div class="author-name">Anjali M.</div>
+              <div class="author-role">Nurse · Frankfurt, Germany</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section id="faq" class="section">
+    <div class="container">
+      <div class="section-header fade-in" style="text-align:center;">
+        <div class="section-label">FAQ</div>
+        <h2 class="section-title">Frequently asked questions</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Is FiniQ really free to start? <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">Yes, 100% free. No credit card needed. Our free plan includes expense tracking, a basic dashboard, savings goals, and a 5-stock watchlist. You only upgrade when you want live stock data and unlimited features.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Does FiniQ support Indian Rupees (INR)? <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">Absolutely. FiniQ was built with the Indian diaspora in mind. Premium users can track expenses and savings in INR, EUR, USD, and GBP — all on the same dashboard. Ideal if you send money home to India or invest in both Indian and global markets.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Can I track both NSE/BSE (India) and US stocks? <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">Yes. Premium members can track stocks from NSE (National Stock Exchange India), BSE (Bombay Stock Exchange), NYSE, and NASDAQ all in one watchlist. No need to switch between apps.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            How do I cancel my Premium subscription? <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">You can cancel any time from your account settings with one click. No questions asked, no cancellation fees. You keep Premium access until the end of your current billing period.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Is my financial data safe with FiniQ? <span class="faq-arrow">▼</span>
+          </button>
+          <div class="faq-answer">Yes. FiniQ does not connect to your bank account — you enter data manually, so your banking credentials are never shared. All data is encrypted and stored securely. We never sell your data to third parties.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CUSTOMER FEEDBACK ===== -->
+  <section id="feedback" class="section" style="background:var(--navy-mid);">
+    <div class="container">
+      <div class="section-header fade-in" style="text-align:center;">
+        <div class="section-label">Feedback</div>
+        <h2 class="section-title">We'd love to hear from you</h2>
+        <p class="section-sub" style="margin:0 auto;">Your feedback directly shapes what we build next. Every message is read by our founder.</p>
+      </div>
+      <div class="feedback-wrap fade-in">
+        <h3>Leave your feedback</h3>
+        <p>How would you rate FiniQ so far?</p>
+        <div class="star-rating" id="starRating">
+          <span onclick="setRating(1)">★</span>
+          <span onclick="setRating(2)">★</span>
+          <span onclick="setRating(3)">★</span>
+          <span onclick="setRating(4)">★</span>
+          <span onclick="setRating(5)">★</span>
+        </div>
+        <form id="feedbackForm" onsubmit="submitFeedback(event)">
+          <div class="form-group">
+            <label>Your name</label>
+            <input type="text" placeholder="e.g. Priya Sharma" required />
+          </div>
+          <div class="form-group">
+            <label>Your email (optional)</label>
+            <input type="email" placeholder="we'll reply if you leave it" />
+          </div>
+          <div class="form-group">
+            <label>Your message</label>
+            <textarea rows="4" placeholder="Tell us what you love, what you'd change, or what feature you want next..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;text-align:center;">Send Feedback →</button>
+        </form>
+        <div class="form-success" id="formSuccess">
+          ✅ Thank you! Your feedback has been received. We read every single message.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA BANNER ===== -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-banner fade-in">
+        <h2>Start managing your money smarter — today.</h2>
+        <p>Join thousands of global professionals who use FiniQ to track, save, and invest with confidence.</p>
+        <a href="#" class="btn btn-primary" style="font-size:1rem;padding:15px 36px;">🚀 Create Free Account</a>
+        <p style="margin-top:12px;font-size:0.8rem;color:var(--muted);">No credit card. No commitment. Cancel any time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="logo">Fini<span>Q</span></div>
+          <p>Your all-in-one personal finance dashboard. Built for global Indians and professionals worldwide.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#">Changelog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#feedback">Contact</a></li>
+            <li><a href="#">Careers</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Cookie Policy</a></li>
+            <li><a href="#">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 FiniQ. All rights reserved. Built with ❤️ for the global Indian community.</p>
+        <p>Made in <a href="#">Ireland 🇮🇪</a> · For the world 🌍</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    // --- Scroll fade-in animations ---
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // --- Mobile menu ---
+    function toggleMenu() {
+      const links = document.querySelector('.nav-links');
+      const cta = document.querySelector('.nav-cta');
+      const showing = links.style.display === 'flex';
+      links.style.cssText = showing ? '' : 'display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:#0D1B2E;padding:20px;gap:16px;border-bottom:1px solid #1C2E45;z-index:99;';
+      cta.style.cssText = showing ? '' : 'display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:#0D1B2E;padding:0 20px 20px;gap:10px;z-index:99;margin-top:150px;';
+    }
+
+    // --- FAQ accordion ---
+    function toggleFaq(btn) {
+      const item = btn.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    // --- Star rating ---
+    let selectedRating = 0;
+    function setRating(n) {
+      selectedRating = n;
+      document.querySelectorAll('#starRating span').forEach((s, i) => {
+        s.classList.toggle('active', i < n);
+      });
+    }
+
+    // --- Feedback form ---
+    function submitFeedback(e) {
+      e.preventDefault();
+      document.getElementById('feedbackForm').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    }
+
+    // --- Smooth close mobile nav on link click ---
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.addEventListener('click', () => {
+        document.querySelector('.nav-links').style.cssText = '';
+        document.querySelector('.nav-cta').style.cssText = '';
+      });
+    });
+  </script>
+
+</body>
+</html>
