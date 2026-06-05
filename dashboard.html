@@ -51,6 +51,37 @@
     .month-btn:hover{border-color:var(--green);}
     .month-label{font-size:.95rem;font-weight:700;color:#fff;min-width:140px;text-align:center;}
 
+    /* ── MONTHLY SUMMARY ── */
+    .ms-wrap{background:linear-gradient(135deg,#0D2B1F 0%,#0D1B2E 100%);
+      border:1px solid rgba(0,214,143,.2);border-radius:16px;padding:20px 22px;margin-bottom:20px;}
+    .ms-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+    .ms-top h3{font-size:.92rem;font-weight:700;color:#fff;}
+    .ms-add-btn{background:rgba(0,214,143,.15);border:1px solid rgba(0,214,143,.3);color:var(--green);
+      font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;padding:6px 14px;
+      border-radius:8px;cursor:pointer;transition:all .2s;}
+    .ms-add-btn:hover{background:rgba(0,214,143,.25);}
+    .ms-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+    .ms-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+      border-radius:12px;padding:14px 16px;}
+    .ms-card.income{border-color:rgba(0,214,143,.25);}
+    .ms-card.spent{border-color:rgba(255,107,107,.2);}
+    .ms-card.invested{border-color:rgba(241,195,74,.2);}
+    .ms-card.remaining{border-color:rgba(93,173,226,.2);}
+    .ms-icon{font-size:1.2rem;display:block;margin-bottom:6px;}
+    .ms-label{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;
+      letter-spacing:.05em;display:block;margin-bottom:4px;}
+    .ms-value{font-size:1.25rem;font-weight:800;color:#fff;display:block;line-height:1.1;}
+    .ms-value.green{color:var(--green);} .ms-value.red{color:var(--red);}
+    .ms-pct{font-size:.72rem;color:var(--muted);display:block;margin-top:3px;}
+    .ms-hint{font-size:.72rem;color:var(--green);display:block;margin-top:3px;cursor:pointer;}
+    /* Breakdown bar */
+    .ms-bar-wrap{margin-top:4px;}
+    .ms-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--border);margin-bottom:8px;}
+    .ms-bar-seg{height:100%;transition:width .5s ease;}
+    .ms-legend{display:flex;gap:16px;flex-wrap:wrap;}
+    .ms-legend-item{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted);}
+    .ms-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
     /* ── STAT CARDS ── */
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
     .stat-card{background:var(--navy-card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
@@ -193,6 +224,10 @@
       .charts-grid{grid-template-columns:1fr;}
       .budget-grid{grid-template-columns:1fr;}
       .nav-tabs{display:none;}
+      .ms-cards{grid-template-columns:repeat(2,1fr);}
+    }
+    @media(max-width:600px){
+      .ms-cards{grid-template-columns:1fr 1fr;}
     }
     @media(max-width:560px){
       .main{padding:12px;}
@@ -238,6 +273,53 @@
 
   <!-- ── OVERVIEW TAB ── -->
   <div id="tab-overview" class="tab-content active">
+
+    <!-- Monthly Financial Summary -->
+    <div class="ms-wrap" id="msSummary">
+      <div class="ms-top">
+        <h3 id="msTitle">Monthly Financial Summary</h3>
+        <button class="ms-add-btn" onclick="openAddIncome()">💼 Add Salary / Income</button>
+      </div>
+      <div class="ms-cards">
+        <div class="ms-card income">
+          <span class="ms-icon">💼</span>
+          <span class="ms-label">Salary & Income</span>
+          <span class="ms-value green" id="msIncome">—</span>
+          <span class="ms-hint" onclick="openAddIncome()" id="msIncomeHint">+ tap to add income</span>
+        </div>
+        <div class="ms-card spent">
+          <span class="ms-icon">💸</span>
+          <span class="ms-label">Total Spent</span>
+          <span class="ms-value red" id="msSpent">—</span>
+          <span class="ms-pct" id="msSpentPct">— of income</span>
+        </div>
+        <div class="ms-card invested">
+          <span class="ms-icon">📈</span>
+          <span class="ms-label">Savings & Investments</span>
+          <span class="ms-value" style="color:var(--yellow);" id="msInvested">—</span>
+          <span class="ms-pct" id="msInvestedPct">— of income</span>
+        </div>
+        <div class="ms-card remaining">
+          <span class="ms-icon">🏦</span>
+          <span class="ms-label">Net Remaining</span>
+          <span class="ms-value" id="msRemaining">—</span>
+          <span class="ms-pct" id="msRemainingPct">— of income</span>
+        </div>
+      </div>
+      <!-- Visual breakdown bar -->
+      <div class="ms-bar-wrap">
+        <div class="ms-bar">
+          <div class="ms-bar-seg" id="msBarSpent"    style="background:var(--red);width:0%;"></div>
+          <div class="ms-bar-seg" id="msBarInvested" style="background:var(--yellow);width:0%;"></div>
+          <div class="ms-bar-seg" id="msBarRemaining"style="background:var(--green);width:0%;"></div>
+        </div>
+        <div class="ms-legend">
+          <div class="ms-legend-item"><div class="ms-legend-dot" style="background:var(--red);"></div><span id="msLegSpent">Spent 0%</span></div>
+          <div class="ms-legend-item"><div class="ms-legend-dot" style="background:var(--yellow);"></div><span id="msLegInvested">Invested 0%</span></div>
+          <div class="ms-legend-item"><div class="ms-legend-dot" style="background:var(--green);"></div><span id="msLegRemaining">Remaining 0%</span></div>
+        </div>
+      </div>
+    </div>
 
     <!-- Stat cards -->
     <div class="stats-grid">
@@ -300,10 +382,20 @@
   <!-- ── REPORTS TAB ── -->
   <div id="tab-reports" class="tab-content">
     <div class="report-card">
-      <h3>📅 Yearly Spending — <span id="rptYear">—</span></h3>
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
-        <button class="month-btn" style="width:auto;padding:0 12px;" onclick="changeYear(-1)">◀ <span id="prevYear"></span></button>
-        <button class="month-btn" style="width:auto;padding:0 12px;" onclick="changeYear(1)"><span id="nextYear"></span> ▶</button>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+        <div>
+          <h3 style="margin-bottom:10px;">📅 Yearly Spending — <span id="rptYear">—</span></h3>
+          <div style="display:flex;gap:8px;">
+            <button class="month-btn" style="width:auto;padding:0 12px;" onclick="changeYear(-1)">◀ <span id="prevYear"></span></button>
+            <button class="month-btn" style="width:auto;padding:0 12px;" onclick="changeYear(1)"><span id="nextYear"></span> ▶</button>
+          </div>
+        </div>
+        <!-- Annual total — top right -->
+        <div style="background:rgba(0,214,143,.1);border:1px solid rgba(0,214,143,.25);border-radius:12px;padding:12px 18px;text-align:right;">
+          <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Annual Total</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--green);" id="annualTotal">—</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:2px;" id="annualAvg">avg — / month</div>
+        </div>
       </div>
       <div class="chart-wrap" style="height:250px;"><canvas id="yearlyChart"></canvas></div>
     </div>
@@ -444,6 +536,57 @@
 
 <!-- FAB -->
 <button class="fab" onclick="openAddExpense()">＋ Add Expense</button>
+
+<!-- ══ ADD INCOME MODAL ══ -->
+<div id="incomeModal" class="modal-overlay" onclick="closeOut(event,'incomeModal')">
+  <div class="modal-box" style="max-width:400px;">
+    <button class="modal-close" onclick="closeModal('incomeModal')">✕</button>
+    <div class="modal-title">💼 Add Salary / Income</div>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:18px;">
+      Add your income for <strong id="incomeMonthLabel" style="color:#fff;"></strong>.
+      This is used to calculate how much you saved and invested.
+    </p>
+    <form onsubmit="submitIncome(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount *</label>
+          <input type="number" id="iAmt" placeholder="e.g. 85000" step="0.01" min="0" required />
+        </div>
+        <div class="form-group">
+          <label>Currency</label>
+          <select id="iCurr">
+            <option value="INR">₹ INR</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Income Type</label>
+        <select id="iCat">
+          <option value="salary">💼 Monthly Salary</option>
+          <option value="freelance">💻 Freelance / Side Income</option>
+          <option value="business">🏢 Business Income</option>
+          <option value="rental">🏠 Rental Income</option>
+          <option value="investment_return">📈 Investment Returns</option>
+          <option value="bonus">🎁 Bonus / Commission</option>
+          <option value="misc">📦 Other Income</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date Received *</label>
+          <input type="date" id="iDate" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Note (optional)</label>
+        <input type="text" id="iNote" placeholder="e.g. June salary, HDFC transfer..." />
+      </div>
+      <button type="submit" class="btn-primary" id="addIncomeBtn">💼 Add Income</button>
+    </form>
+  </div>
+</div>
 
 <!-- ══ ADD EXPENSE MODAL ══ -->
 <div id="addModal" class="modal-overlay" onclick="closeOut(event,'addModal')">
@@ -631,8 +774,116 @@ function mBud() {
 // RENDER ALL
 // ════════════════════════════════════════
 function renderAll() {
+  renderMonthlySummary();
   renderStats(); renderPie(); renderBar();
   renderExpList(); renderBudgetGrid(); renderReports();
+}
+
+// ════════════════════════════════════════
+// MONTHLY FINANCIAL SUMMARY
+// ════════════════════════════════════════
+function renderMonthlySummary() {
+  const s = SYM[currency];
+
+  // All entries this month
+  const allMonth = expenses.filter(e => {
+    const d = new Date(e.date);
+    return d.getMonth() === cm && d.getFullYear() === cy;
+  });
+
+  // Income = type 'income'
+  const income = allMonth
+    .filter(e => e.type === 'income')
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  // Invested = category 'savings' (Savings & Investment)
+  const invested = allMonth
+    .filter(e => e.type !== 'income' && e.category === 'savings')
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  // Spent = all expenses except savings/investment
+  const spent = allMonth
+    .filter(e => e.type !== 'income' && e.category !== 'savings')
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  // Remaining = income - spent - invested
+  const remaining = income - spent - invested;
+
+  // Update title
+  document.getElementById('msTitle').textContent =
+    `${MONTHS[cm]} ${cy} — Financial Summary`;
+  document.getElementById('incomeMonthLabel').textContent =
+    `${MONTHS[cm]} ${cy}`;
+
+  // Update cards
+  document.getElementById('msIncome').textContent =
+    income > 0 ? `${s}${fmt(income)}` : '—';
+  document.getElementById('msIncomeHint').textContent =
+    income > 0 ? `${allMonth.filter(e=>e.type==='income').length} income entr${allMonth.filter(e=>e.type==='income').length===1?'y':'ies'}` : '+ tap to add income';
+
+  document.getElementById('msSpent').textContent = `${s}${fmt(spent)}`;
+  document.getElementById('msSpentPct').textContent =
+    income > 0 ? `${((spent/income)*100).toFixed(1)}% of income` : 'add income to see %';
+
+  document.getElementById('msInvested').textContent = `${s}${fmt(invested)}`;
+  document.getElementById('msInvestedPct').textContent =
+    income > 0 ? `${((invested/income)*100).toFixed(1)}% of income` : 'add income to see %';
+
+  const remEl = document.getElementById('msRemaining');
+  remEl.textContent = income > 0 ? `${s}${fmt(Math.abs(remaining))}` : '—';
+  remEl.className = 'ms-value ' + (remaining < 0 ? 'red' : 'green');
+  document.getElementById('msRemainingPct').textContent =
+    income > 0
+      ? (remaining < 0 ? '⚠️ Over income!' : `${((remaining/income)*100).toFixed(1)}% remaining`)
+      : 'add income to see';
+
+  // Breakdown bar
+  if(income > 0) {
+    const spentPct    = Math.min((spent/income)*100, 100);
+    const investedPct = Math.min((invested/income)*100, Math.max(0, 100-spentPct));
+    const remainPct   = Math.max(0, 100 - spentPct - investedPct);
+    document.getElementById('msBarSpent').style.width     = spentPct    + '%';
+    document.getElementById('msBarInvested').style.width  = investedPct + '%';
+    document.getElementById('msBarRemaining').style.width = remainPct   + '%';
+    document.getElementById('msLegSpent').textContent     = `Spent ${spentPct.toFixed(1)}%`;
+    document.getElementById('msLegInvested').textContent  = `Invested ${investedPct.toFixed(1)}%`;
+    document.getElementById('msLegRemaining').textContent = `Remaining ${remainPct.toFixed(1)}%`;
+  } else {
+    ['msBarSpent','msBarInvested','msBarRemaining'].forEach(id =>
+      document.getElementById(id).style.width = '0%');
+    document.getElementById('msLegSpent').textContent     = 'Spent 0%';
+    document.getElementById('msLegInvested').textContent  = 'Invested 0%';
+    document.getElementById('msLegRemaining').textContent = 'Remaining 0%';
+  }
+}
+
+// ════════════════════════════════════════
+// ADD INCOME
+// ════════════════════════════════════════
+function openAddIncome() {
+  document.getElementById('iDate').value = new Date(cy, cm, 1).toISOString().split('T')[0];
+  document.getElementById('iCurr').value = currency;
+  document.getElementById('incomeModal').style.display = 'flex';
+}
+
+async function submitIncome(ev) {
+  ev.preventDefault();
+  const btn = document.getElementById('addIncomeBtn');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  const { error } = await db.from('expenses').insert({
+    user_id:  user.id,
+    amount:   parseFloat(document.getElementById('iAmt').value),
+    category: document.getElementById('iCat').value,
+    currency: document.getElementById('iCurr').value,
+    date:     document.getElementById('iDate').value,
+    note:     document.getElementById('iNote').value || 'Income',
+    type:     'income',
+  });
+
+  btn.textContent = '💼 Add Income'; btn.disabled = false;
+  if(error) { alert('Error: ' + error.message); return; }
+  closeModal('incomeModal'); ev.target.reset(); await loadAll();
 }
 
 // ════════════════════════════════════════
@@ -844,6 +1095,19 @@ function renderReports() {
   document.getElementById('prevYear').textContent=ry-1;
   document.getElementById('nextYear').textContent=ry+1;
   const s=SYM[currency];
+
+  // Annual total (top-right of chart)
+  const annualSpend = expenses
+    .filter(e => new Date(e.date).getFullYear()===ry && e.type!=='income')
+    .reduce((a,e)=>a+Number(e.amount),0);
+  const monthsWithData = [...new Set(
+    expenses
+      .filter(e => new Date(e.date).getFullYear()===ry && e.type!=='income')
+      .map(e => new Date(e.date).getMonth())
+  )].length || 1;
+  document.getElementById('annualTotal').textContent = `${s}${fmt(annualSpend)}`;
+  document.getElementById('annualAvg').textContent =
+    annualSpend > 0 ? `avg ${s}${fmt(annualSpend/monthsWithData)} / month` : 'no data yet';
   const totals=MONTHS.map((_,i)=>
     expenses.filter(e=>{const d=new Date(e.date);return d.getMonth()===i&&d.getFullYear()===ry&&e.type!=='income';})
     .reduce((a,e)=>a+Number(e.amount),0)
