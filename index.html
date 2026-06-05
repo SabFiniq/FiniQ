@@ -328,14 +328,36 @@
     .pricing-features li .cross { color: #444; }
     .pricing-card .btn { width: 100%; text-align: center; }
 
-    /* ===== TESTIMONIALS ===== */
-    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    /* ===== TESTIMONIALS — AUTO SCROLL ===== */
+    .testimonials-overflow {
+      overflow: hidden;
+      width: 100%;
+      /* fade edges left and right for a polished look */
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+    }
+    .testimonials-track {
+      display: flex;
+      gap: 20px;
+      width: max-content;
+      animation: scroll-left 28s linear infinite;
+    }
+    /* Pause scrolling when user hovers — good UX */
+    .testimonials-track:hover { animation-play-state: paused; }
+
+    @keyframes scroll-left {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
     .testimonial-card {
       background: var(--navy-card);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 28px;
+      width: 320px;
+      flex-shrink: 0;
     }
+    .testimonial-card:hover { border-color: var(--green); }
     .stars { color: #F5C518; font-size: 0.9rem; margin-bottom: 12px; letter-spacing: 2px; }
     .testimonial-text { font-size: 0.9rem; color: var(--muted); margin-bottom: 20px; line-height: 1.7; font-style: italic; }
     .testimonial-author { display: flex; align-items: center; gap: 12px; }
@@ -708,39 +730,124 @@
         <div class="section-label">Testimonials</div>
         <h2 class="section-title">What our users are saying</h2>
       </div>
-      <div class="testimonials-grid">
-        <div class="testimonial-card fade-in">
-          <div class="stars">★★★★★</div>
-          <p class="testimonial-text">"Finally an app that understands I manage money in both INR and EUR. FiniQ makes it so simple to see everything in one place. I cancelled three other apps after this."</p>
-          <div class="testimonial-author">
-            <div class="author-avatar">PK</div>
-            <div>
-              <div class="author-name">Priya K.</div>
-              <div class="author-role">Software Engineer · Dublin, Ireland</div>
+      <!-- Cards are duplicated so the scroll loops seamlessly -->
+      <div class="testimonials-overflow">
+        <div class="testimonials-track">
+
+          <!-- Original set -->
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"Finally an app that understands I manage money in both INR and EUR. FiniQ makes it so simple to see everything in one place. I cancelled three other apps after this."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">PK</div>
+              <div>
+                <div class="author-name">Priya K.</div>
+                <div class="author-role">Software Engineer · Dublin, Ireland</div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="testimonial-card fade-in">
-          <div class="stars">★★★★★</div>
-          <p class="testimonial-text">"The stock watchlist for NSE and US markets together is a game changer. I used to switch between 4 different apps. Now it's all in FiniQ. Super clean UI too."</p>
-          <div class="testimonial-author">
-            <div class="author-avatar">RV</div>
-            <div>
-              <div class="author-name">Rahul V.</div>
-              <div class="author-role">Retail Investor · London, UK</div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"The stock watchlist for NSE and US markets together is a game changer. I used to switch between 4 different apps. Now it's all in FiniQ. Super clean UI too."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">RV</div>
+              <div>
+                <div class="author-name">Rahul V.</div>
+                <div class="author-role">Retail Investor · London, UK</div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="testimonial-card fade-in">
-          <div class="stars">★★★★★</div>
-          <p class="testimonial-text">"I set my monthly budget and FiniQ tells me exactly how much I have left. It took me 5 minutes to set up. I've already started saving €200 more per month!"</p>
-          <div class="testimonial-author">
-            <div class="author-avatar">AM</div>
-            <div>
-              <div class="author-name">Anjali M.</div>
-              <div class="author-role">Nurse · Frankfurt, Germany</div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"I set my monthly budget and FiniQ tells me exactly how much I have left. It took me 5 minutes to set up. I've already started saving €200 more per month!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">AM</div>
+              <div>
+                <div class="author-name">Anjali M.</div>
+                <div class="author-role">Nurse · Frankfurt, Germany</div>
+              </div>
             </div>
           </div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"As an Indian working in Germany, keeping track of money in two currencies was a nightmare. FiniQ solved it in one dashboard. Absolutely love the clean design."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">SK</div>
+              <div>
+                <div class="author-name">Suresh K.</div>
+                <div class="author-role">Mechanical Engineer · Munich, Germany</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"The expense categories and budget alerts are exactly what I needed. FiniQ helped me save for my first European holiday in just 3 months!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">NR</div>
+              <div>
+                <div class="author-name">Neha R.</div>
+                <div class="author-role">Doctor · Manchester, UK</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Duplicate set — exact copy for seamless loop -->
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"Finally an app that understands I manage money in both INR and EUR. FiniQ makes it so simple to see everything in one place. I cancelled three other apps after this."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">PK</div>
+              <div>
+                <div class="author-name">Priya K.</div>
+                <div class="author-role">Software Engineer · Dublin, Ireland</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"The stock watchlist for NSE and US markets together is a game changer. I used to switch between 4 different apps. Now it's all in FiniQ. Super clean UI too."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">RV</div>
+              <div>
+                <div class="author-name">Rahul V.</div>
+                <div class="author-role">Retail Investor · London, UK</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"I set my monthly budget and FiniQ tells me exactly how much I have left. It took me 5 minutes to set up. I've already started saving €200 more per month!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">AM</div>
+              <div>
+                <div class="author-name">Anjali M.</div>
+                <div class="author-role">Nurse · Frankfurt, Germany</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"As an Indian working in Germany, keeping track of money in two currencies was a nightmare. FiniQ solved it in one dashboard. Absolutely love the clean design."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">SK</div>
+              <div>
+                <div class="author-name">Suresh K.</div>
+                <div class="author-role">Mechanical Engineer · Munich, Germany</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">"The expense categories and budget alerts are exactly what I needed. FiniQ helped me save for my first European holiday in just 3 months!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">NR</div>
+              <div>
+                <div class="author-name">Neha R.</div>
+                <div class="author-role">Doctor · Manchester, UK</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
