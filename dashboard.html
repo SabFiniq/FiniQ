@@ -1168,9 +1168,6 @@ function renderMonthlySummary() {
   // Show income/tax/allowance list with delete buttons
   renderIncomeList([...incomeEntries, ...taxEntries, ...allowanceEntries], [], s);
 
-  // Remaining = income - spent - invested
-  const remaining = income - spent - invested;
-
   // Update title
   document.getElementById('msTitle').textContent =
     `${MONTHS[cm]} ${cy} — Financial Summary`;
