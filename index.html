@@ -607,6 +607,37 @@
 </head>
 <body>
 
+  <!-- ===== BETA BANNER ===== -->
+  <div id="betaBanner" style="
+    background: linear-gradient(90deg, #0D2B1F, #0a1628, #0D2B1F);
+    border-bottom: 1px solid rgba(0,214,143,0.35);
+    padding: 10px 20px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem;
+    color: #cdd9e5;
+    position: relative;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  ">
+    <span style="background:rgba(0,214,143,0.15);border:1px solid rgba(0,214,143,0.4);color:#00D68F;
+      font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:0.05em;">
+      🚀 BETA
+    </span>
+    <span>FiniQ is in <strong style="color:#fff;">early access</strong> — free to use now. Premium features launching very soon.</span>
+    <a href="#pricing" onclick="document.getElementById('betaBanner').style.display='none'"
+      style="color:#00D68F;font-weight:600;text-decoration:none;white-space:nowrap;">
+      Get early access →
+    </a>
+    <button onclick="document.getElementById('betaBanner').style.display='none'"
+      style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;
+      color:#8892A4;cursor:pointer;font-size:1rem;line-height:1;">✕</button>
+  </div>
+
   <!-- ===== NAVIGATION ===== -->
   <nav>
     <div class="nav-inner">
