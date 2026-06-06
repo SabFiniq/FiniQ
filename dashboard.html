@@ -435,14 +435,14 @@
   <!-- ── REPORTS TAB ── -->
   <div id="tab-reports" class="tab-content">
     <!-- Premium gate for yearly reports -->
-    <div id="reportsGate" class="premium-gate" style="display:none;">
-      <div class="premium-gate-overlay">
-        <div style="font-size:2rem;">📈</div>
-        <h3>Yearly Reports — Premium Feature</h3>
-        <p>Upgrade to Premium to unlock yearly reports, annual comparisons and full spending history.</p>
-        <button class="btn-upgrade" onclick="startPremium()" id="reportsUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
-      </div>
+    <div id="reportsGate" style="display:none; text-align:center; padding:60px 20px;
+      background:var(--navy-card); border:1px solid var(--border); border-radius:16px; margin-bottom:20px;">
+      <div style="font-size:3rem; margin-bottom:16px;">📈</div>
+      <h3 style="color:#fff; margin-bottom:8px;">Yearly Reports — Premium Feature</h3>
+      <p style="color:var(--muted); max-width:320px; margin:0 auto 20px; font-size:.85rem;">Upgrade to Premium to unlock yearly reports, annual comparisons and full spending history.</p>
+      <button class="btn-upgrade" onclick="startPremium()" id="reportsUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
     </div>
+    <div id="reportsContent">
     <div class="report-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
         <div>
@@ -465,21 +465,22 @@
       <h3>📊 Category Breakdown — <span id="rptYearCat">—</span></h3>
       <div id="yrCatBreak"></div>
     </div>
+    </div><!-- end reportsContent -->
   </div>
 
   <!-- ── UPLOAD TAB ── -->
   <div id="tab-upload" class="tab-content">
 
     <!-- Premium gate for bank statement upload -->
-    <div id="uploadGate" class="premium-gate" style="display:none;">
-      <div class="premium-gate-overlay">
-        <div style="font-size:2rem;">📂</div>
-        <h3>Bank Statement Upload — Premium Feature</h3>
-        <p>Upgrade to Premium to upload CSV and PDF bank statements and import transactions automatically.</p>
-        <button class="btn-upgrade" onclick="startPremium()" id="uploadUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
-      </div>
+    <div id="uploadGate" style="display:none; text-align:center; padding:60px 20px;
+      background:var(--navy-card); border:1px solid var(--border); border-radius:16px; margin-bottom:20px;">
+      <div style="font-size:3rem; margin-bottom:16px;">📂</div>
+      <h3 style="color:#fff; margin-bottom:8px;">Bank Statement Upload — Premium Feature</h3>
+      <p style="color:var(--muted); max-width:320px; margin:0 auto 20px; font-size:.85rem;">Upgrade to Premium to upload CSV and PDF bank statements and import transactions automatically.</p>
+      <button class="btn-upgrade" onclick="startPremium()" id="uploadUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
     </div>
 
+    <div id="uploadContent">
     <!-- File picker — CSV or PDF -->
     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('stmtFile').click()">
       <div class="icon">📂</div>
@@ -602,6 +603,7 @@
       </p>
     </div>
 
+    </div><!-- end uploadContent -->
   </div>
 
 </main>
@@ -1042,13 +1044,17 @@ function updatePremiumUI() {
       : `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">⭐ Upgrade €5/mo</button>`;
   }
 
-  // Reports tab gate
+  // Reports tab gate + content
   const rg = document.getElementById('reportsGate');
   if (rg) rg.style.display = isPremium ? 'none' : 'block';
+  const rc = document.getElementById('reportsContent');
+  if (rc) rc.style.display = isPremium ? 'block' : 'none';
 
-  // Upload tab gate
+  // Upload tab gate + content
   const ug = document.getElementById('uploadGate');
   if (ug) ug.style.display = isPremium ? 'none' : 'block';
+  const uc = document.getElementById('uploadContent');
+  if (uc) uc.style.display = isPremium ? 'block' : 'none';
 }
 
 // ════════════════════════════════════════
