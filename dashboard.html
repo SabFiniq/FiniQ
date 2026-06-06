@@ -37,6 +37,30 @@
     .btn-logout{background:none;border:1px solid var(--border);color:var(--muted);
       font-family:'Poppins',sans-serif;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .2s;}
     .btn-logout:hover{border-color:var(--red);color:var(--red);}
+    /* Premium badge + upgrade button */
+    .premium-badge{background:linear-gradient(135deg,#F5C142,#FF8B00);color:#000;
+      font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.04em;}
+    .btn-upgrade{background:linear-gradient(135deg,#F5C142,#FF8B00);color:#000;border:none;
+      font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;padding:6px 14px;
+      border-radius:8px;cursor:pointer;transition:all .2s;}
+    .btn-upgrade:hover{opacity:.85;transform:translateY(-1px);}
+    .btn-upgrade:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+    /* Premium gate overlay */
+    .premium-gate{position:relative;}
+    .premium-gate-overlay{position:absolute;inset:0;background:rgba(7,14,26,.88);
+      backdrop-filter:blur(4px);border-radius:14px;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:12px;z-index:10;}
+    .premium-gate-overlay h3{font-size:1rem;font-weight:700;color:#fff;}
+    .premium-gate-overlay p{font-size:.82rem;color:var(--muted);text-align:center;max-width:280px;}
+    /* Payment success banner */
+    .payment-banner{background:linear-gradient(135deg,#0D2B1F,#0D1B2E);border:1px solid var(--green);
+      border-radius:12px;padding:16px 20px;margin-bottom:18px;display:flex;
+      align-items:center;gap:14px;}
+    .payment-banner .icon{font-size:1.8rem;}
+    .payment-banner h3{font-size:.95rem;font-weight:700;color:var(--green);margin-bottom:3px;}
+    .payment-banner p{font-size:.82rem;color:var(--muted);}
+    .payment-banner .close-btn{margin-left:auto;background:none;border:none;
+      color:var(--muted);cursor:pointer;font-size:1.1rem;}
 
     /* ── MAIN ── */
     .main{margin-top:58px;padding:20px;max-width:1200px;margin-left:auto;margin-right:auto;}
@@ -256,6 +280,7 @@
       <option value="USD">$ USD</option>
       <option value="EUR">€ EUR</option>
     </select>
+    <div id="premiumNav"><!-- populated by updatePremiumUI() --></div>
     <div class="user-chip">👋 <strong id="userName">...</strong></div>
     <button class="btn-logout" onclick="handleLogout()">Log Out</button>
   </div>
@@ -263,6 +288,16 @@
 
 <!-- ══ MAIN ══ -->
 <main class="main" style="margin-top:78px;">
+
+  <!-- Payment success banner (shown after Stripe redirect) -->
+  <div id="paymentBanner" class="payment-banner" style="display:none;">
+    <div class="icon">🎉</div>
+    <div>
+      <h3>Welcome to FiniQ Premium!</h3>
+      <p>Your payment was successful. All Premium features are now unlocked.</p>
+    </div>
+    <button class="close-btn" onclick="document.getElementById('paymentBanner').style.display='none'">✕</button>
+  </div>
 
   <!-- Month navigator -->
   <div class="month-nav">
@@ -399,6 +434,15 @@
 
   <!-- ── REPORTS TAB ── -->
   <div id="tab-reports" class="tab-content">
+    <!-- Premium gate for yearly reports -->
+    <div id="reportsGate" class="premium-gate" style="display:none;">
+      <div class="premium-gate-overlay">
+        <div style="font-size:2rem;">📈</div>
+        <h3>Yearly Reports — Premium Feature</h3>
+        <p>Upgrade to Premium to unlock yearly reports, annual comparisons and full spending history.</p>
+        <button class="btn-upgrade" onclick="startPremium()" id="reportsUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
+      </div>
+    </div>
     <div class="report-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
         <div>
@@ -425,6 +469,16 @@
 
   <!-- ── UPLOAD TAB ── -->
   <div id="tab-upload" class="tab-content">
+
+    <!-- Premium gate for bank statement upload -->
+    <div id="uploadGate" class="premium-gate" style="display:none;">
+      <div class="premium-gate-overlay">
+        <div style="font-size:2rem;">📂</div>
+        <h3>Bank Statement Upload — Premium Feature</h3>
+        <p>Upgrade to Premium to upload CSV and PDF bank statements and import transactions automatically.</p>
+        <button class="btn-upgrade" onclick="startPremium()" id="uploadUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
+      </div>
+    </div>
 
     <!-- File picker — CSV or PDF -->
     <div class="upload-zone" id="uploadZone" onclick="document.getElementById('stmtFile').click()">
@@ -929,7 +983,12 @@ let expenses = [], budgets = [];
 let pieInst = null, barInst = null, yrInst = null;
 
 // ════════════════════════════════════════
-// INIT — auth check
+// PREMIUM STATE
+// ════════════════════════════════════════
+let isPremium = false;
+
+// ════════════════════════════════════════
+// INIT — auth check + premium check
 // ════════════════════════════════════════
 async function init() {
   const { data:{session} } = await db.auth.getSession();
@@ -938,14 +997,82 @@ async function init() {
   const name = user.user_metadata?.full_name || user.email;
   document.getElementById('userName').textContent = name.split(' ')[0];
   populateCatDropdown();
-  document.getElementById('currencySelect').value = currency; // restore saved currency
-  // Wire up the net amount and currency fields for gross calc
-  ['iAmt','iCurr'].forEach(id => {
+  document.getElementById('currencySelect').value = currency;
+  ['iGross','iCurr'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.addEventListener('input', updateGrossCalc);
+    if(el) el.addEventListener('input', calcNetSalary);
   });
   updateMonthLabel();
+
+  // Check premium status from Supabase profiles table
+  await checkPremiumStatus();
+
+  // Handle redirect back from Stripe
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success') {
+    // Refresh premium status (Stripe webhook may take a moment)
+    setTimeout(async () => {
+      await checkPremiumStatus();
+      document.getElementById('paymentBanner').style.display = 'flex';
+      window.history.replaceState({}, '', '/dashboard.html');
+    }, 2000);
+  } else if (params.get('payment') === 'cancelled') {
+    window.history.replaceState({}, '', '/dashboard.html');
+  }
+
   await loadAll();
+}
+
+async function checkPremiumStatus() {
+  const { data: profile } = await db
+    .from('profiles')
+    .select('is_premium, subscription_status')
+    .eq('user_id', user.id)
+    .single();
+  isPremium = profile?.is_premium || false;
+  updatePremiumUI();
+}
+
+function updatePremiumUI() {
+  // Nav badge
+  const nav = document.getElementById('premiumNav');
+  if (nav) {
+    nav.innerHTML = isPremium
+      ? `<span class="premium-badge">⭐ Premium</span>`
+      : `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">⭐ Upgrade €5/mo</button>`;
+  }
+
+  // Reports tab gate
+  const rg = document.getElementById('reportsGate');
+  if (rg) rg.style.display = isPremium ? 'none' : 'block';
+
+  // Upload tab gate
+  const ug = document.getElementById('uploadGate');
+  if (ug) ug.style.display = isPremium ? 'none' : 'block';
+}
+
+// ════════════════════════════════════════
+// STRIPE — START PREMIUM CHECKOUT
+// ════════════════════════════════════════
+async function startPremium() {
+  // Disable all upgrade buttons to prevent double-click
+  document.querySelectorAll('.btn-upgrade, #premiumBtn, #reportsUpgradeBtn, #uploadUpgradeBtn')
+    .forEach(b => { b.textContent = 'Redirecting to Stripe...'; b.disabled = true; });
+
+  try {
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, userEmail: user.email }),
+    });
+    const { url, error } = await response.json();
+    if (error) throw new Error(error);
+    window.location.href = url; // go to Stripe checkout page
+  } catch (err) {
+    alert('Could not start checkout: ' + err.message);
+    document.querySelectorAll('.btn-upgrade')
+      .forEach(b => { b.textContent = '⭐ Upgrade to Premium — €5/month'; b.disabled = false; });
+  }
 }
 
 // ════════════════════════════════════════
@@ -1476,6 +1603,16 @@ function openAddExpense() {
 async function submitExpense(ev) {
   ev.preventDefault();
   const btn=document.getElementById('addBtn');
+
+  // Free tier limit: 50 expenses per month
+  if (!isPremium && mExp().length >= 50) {
+    alert('Free plan limit reached — 50 expenses per month.\n\nUpgrade to Premium for unlimited expense tracking!');
+    btn.disabled = false;
+    closeModal('addModal');
+    startPremium();
+    return;
+  }
+
   btn.textContent='Saving...'; btn.disabled=true;
   const {error}=await db.from('expenses').insert({
     user_id:user.id,

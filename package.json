@@ -1,0 +1,9 @@
+{
+  "name": "finiq",
+  "version": "1.0.0",
+  "description": "FiniQ — Personal Finance Dashboard",
+  "dependencies": {
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}
