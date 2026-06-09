@@ -265,17 +265,19 @@
       font-family:'Poppins',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s;}
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green);}
     .form-group select option{background:var(--navy-mid);}
-    /* ── Date picker calendar icon — make it visible on dark background ── */
-    input[type="date"]::-webkit-calendar-picker-indicator{
-      filter:invert(1) sepia(1) saturate(4) hue-rotate(100deg);
-      cursor:pointer;opacity:.8;
-    }
-    input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
+    /* ── Date picker calendar icon — bright green on dark background ── */
+    input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="month"]::-webkit-calendar-picker-indicator{
-      filter:invert(1) sepia(1) saturate(4) hue-rotate(100deg);
-      cursor:pointer;opacity:.8;
+      filter: brightness(0) saturate(100%) invert(66%) sepia(80%) saturate(450%) hue-rotate(116deg) brightness(95%);
+      cursor:pointer;
+      opacity:1;
+      padding:2px;
+      border-radius:3px;
     }
-    input[type="month"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
+    input[type="date"]::-webkit-calendar-picker-indicator:hover,
+    input[type="month"]::-webkit-calendar-picker-indicator:hover{
+      filter: brightness(0) saturate(100%) invert(90%) sepia(30%) saturate(600%) hue-rotate(100deg);
+    }
     .btn-primary{background:var(--green);color:var(--navy);border:none;border-radius:8px;
       padding:11px;font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:700;
       cursor:pointer;width:100%;transition:background .2s;margin-top:4px;}
