@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FiniQ OG Image Generator</title>
+  <style>
+    body { margin: 0; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
+    canvas { border: 2px solid #00D68F; display: block; max-width: 100%; }
+    .btn { margin-top: 20px; background: #00D68F; color: #070E1A; border: none; padding: 14px 32px; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; }
+    .btn:hover { background: #00b87a; }
+    p { color: #888; font-size: 0.85rem; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <canvas id="c" width="1200" height="630"></canvas>
+  <button class="btn" onclick="download()">⬇ Download as PNG (for og:image)</button>
+  <p>Open this file in your browser → click Download → upload the PNG to your project root on GitHub</p>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const W = 1200, H = 630;
+
+    // Background
+    ctx.fillStyle = '#070E1A';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle grid dots
+    ctx.fillStyle = 'rgba(0,214,143,0.08)';
+    for (let x = 60; x < W; x += 80) {
+      for (let y = 60; y < H; y += 80) {
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // Left accent bar
+    ctx.fillStyle = '#00D68F';
+    ctx.fillRect(0, 0, 8, H);
+
+    // Decorative chart bars (right side)
+    const barData = [180, 260, 210, 310, 270, 350, 290];
+    const barW = 38, barGap = 18, barX0 = 820, barBase = 530;
+    barData.forEach((h, i) => {
+      const x = barX0 + i * (barW + barGap);
+      ctx.fillStyle = i === 5 ? '#00D68F' : 'rgba(0,214,143,0.25)';
+      ctx.beginPath();
+      ctx.roundRect(x, barBase - h, barW, h, 6);
+      ctx.fill();
+    });
+
+    // Horizontal baseline
+    ctx.strokeStyle = 'rgba(0,214,143,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(800, 532);
+    ctx.lineTo(1160, 532);
+    ctx.stroke();
+
+    // Circle decorations
+    ctx.strokeStyle = 'rgba(0,214,143,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(200, 520, 200, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(200, 520, 260, 0, Math.PI*2); ctx.stroke();
+
+    // Green pill badge
+    ctx.fillStyle = 'rgba(0,214,143,0.15)';
+    ctx.beginPath();
+    ctx.roundRect(80, 120, 240, 38, 20);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,214,143,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(80, 120, 240, 38, 20);
+    ctx.stroke();
+    ctx.fillStyle = '#00D68F';
+    ctx.font = '600 15px Segoe UI';
+    ctx.fillText('🚀  Personal Finance for NRIs', 100, 144);
+
+    // Main headline
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 72px Segoe UI';
+    ctx.fillText('FiniQ', 80, 250);
+
+    ctx.fillStyle = '#00D68F';
+    ctx.font = 'bold 72px Segoe UI';
+    ctx.fillText('Finance', 80, 340);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = '400 72px Segoe UI';
+    ctx.fillText('Dashboard', 80, 430);
+
+    // Tagline
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '400 26px Segoe UI';
+    ctx.fillText('Track expenses · Multi-currency · 10 country tax templates', 80, 490);
+
+    // URL badge
+    ctx.fillStyle = 'rgba(0,214,143,0.12)';
+    ctx.beginPath();
+    ctx.roundRect(80, 550, 360, 44, 10);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,214,143,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(80, 550, 360, 44, 10);
+    ctx.stroke();
+    ctx.fillStyle = '#00D68F';
+    ctx.font = '600 18px Segoe UI';
+    ctx.fillText('🌐  getfiniq.vercel.app', 104, 578);
+
+    // Currency chips
+    const chips = ['₹ INR', '€ EUR', '$ USD', '£ GBP', 'د.إ AED'];
+    chips.forEach((chip, i) => {
+      const cx = 820 + i * 70;
+      ctx.fillStyle = 'rgba(0,214,143,0.1)';
+      ctx.beginPath();
+      ctx.roundRect(cx, 560, 60, 28, 6);
+      ctx.fill();
+      ctx.fillStyle = '#00D68F';
+      ctx.font = '500 12px Segoe UI';
+      ctx.fillText(chip, cx + 8, 579);
+    });
+
+    function download() {
+      const a = document.createElement('a');
+      a.download = 'finiq-og-image.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
+  </script>
+</body>
+</html>

@@ -304,8 +304,15 @@
   <div class="nav-right">
     <select class="currency-select" id="currencySelect" onchange="changeCurrency(this.value)">
       <option value="INR">₹ INR</option>
-      <option value="USD">$ USD</option>
       <option value="EUR">€ EUR</option>
+      <option value="USD">$ USD</option>
+      <option value="GBP">£ GBP</option>
+      <option value="AED">د.إ AED</option>
+      <option value="CAD">C$ CAD</option>
+      <option value="AUD">A$ AUD</option>
+      <option value="SGD">S$ SGD</option>
+      <option value="QAR">﷼ QAR</option>
+      <option value="SAR">﷼ SAR</option>
     </select>
     <div id="premiumNav"><!-- populated by updatePremiumUI() --></div>
     <div class="user-chip">👋 <strong id="userName">...</strong></div>
@@ -370,11 +377,12 @@
           <span class="ms-pct" id="msSpentPct">— of take-home</span>
         </div>
         <!-- Card 4: Savings & Investments -->
-        <div class="ms-card invested">
+        <div class="ms-card invested" style="cursor:pointer;" onclick="openAddSavings()" title="Click to log savings or investment">
           <span class="ms-icon">📈</span>
           <span class="ms-label">Saved & Invested</span>
           <span class="ms-value" style="color:var(--yellow);" id="msInvested">—</span>
           <span class="ms-pct" id="msInvestedPct">— of take-home</span>
+          <span style="font-size:0.65rem;color:var(--green);margin-top:4px;display:block;">＋ Log savings</span>
         </div>
         <!-- Card 5: Net Remaining -->
         <div class="ms-card remaining">
@@ -660,9 +668,16 @@
           <div class="form-group" style="margin-bottom:0;">
             <label>Currency</label>
             <select id="iCurr" onchange="calcNetSalary()">
-              <option value="EUR">€ EUR</option>
-              <option value="INR">₹ INR</option>
-              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR — Euro</option>
+              <option value="INR">₹ INR — Indian Rupee</option>
+              <option value="USD">$ USD — US Dollar</option>
+              <option value="GBP">£ GBP — British Pound</option>
+              <option value="AED">د.إ AED — UAE Dirham</option>
+              <option value="CAD">C$ CAD — Canadian Dollar</option>
+              <option value="AUD">A$ AUD — Australian Dollar</option>
+              <option value="SGD">S$ SGD — Singapore Dollar</option>
+              <option value="QAR">﷼ QAR — Qatari Riyal</option>
+              <option value="SAR">﷼ SAR — Saudi Riyal</option>
             </select>
           </div>
         </div>
@@ -696,9 +711,11 @@
         <div style="display:flex;justify-content:space-between;align-items:center;
           margin-bottom:10px;flex-wrap:wrap;gap:8px;">
           <p style="font-size:.75rem;font-weight:700;color:var(--red);text-transform:uppercase;
-            letter-spacing:.07em;">Step 2 — Tax Deductions (optional)</p>
-          <select id="iTaxCountry" class="import-sel" style="min-width:0;font-size:.77rem;"
-            onchange="loadTaxTemplate()">
+            letter-spacing:.07em;">Step 2 — Tax Deductions</p>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:.72rem;color:var(--muted);">Your country:</span>
+            <select id="iTaxCountry" class="import-sel" style="min-width:0;font-size:.82rem;font-weight:600;border-color:var(--green);padding:4px 8px;"
+              onchange="loadTaxTemplate()">
             <option value="IE">🇮🇪 Ireland</option>
             <option value="IN">🇮🇳 India</option>
             <option value="GB">🇬🇧 UK</option>
@@ -710,7 +727,8 @@
             <option value="DE">🇩🇪 Germany</option>
             <option value="NL">🇳🇱 Netherlands</option>
             <option value="OTHER">🌍 Other</option>
-          </select>
+            </select>
+          </div>
         </div>
         <p id="taxCountryNote" style="font-size:.73rem;color:var(--muted);margin-bottom:10px;
           background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px;"></p>
@@ -785,9 +803,16 @@
         <div class="form-group">
           <label>Currency</label>
           <select id="eCurr">
+            <option value="EUR">€ EUR — Euro</option>
             <option value="INR">₹ INR — Indian Rupee</option>
             <option value="USD">$ USD — US Dollar</option>
-            <option value="EUR">€ EUR — Euro</option>
+            <option value="GBP">£ GBP — British Pound</option>
+            <option value="AED">د.إ AED — UAE Dirham</option>
+            <option value="CAD">C$ CAD — Canadian Dollar</option>
+            <option value="AUD">A$ AUD — Australian Dollar</option>
+            <option value="SGD">S$ SGD — Singapore Dollar</option>
+            <option value="QAR">﷼ QAR — Qatari Riyal</option>
+            <option value="SAR">﷼ SAR — Saudi Riyal</option>
           </select>
         </div>
       </div>
@@ -831,9 +856,16 @@
       <div class="form-group">
         <label>Currency</label>
         <select id="bCurr">
+          <option value="EUR">€ EUR</option>
           <option value="INR">₹ INR</option>
           <option value="USD">$ USD</option>
-          <option value="EUR">€ EUR</option>
+          <option value="GBP">£ GBP</option>
+          <option value="AED">د.إ AED</option>
+          <option value="CAD">C$ CAD</option>
+          <option value="AUD">A$ AUD</option>
+          <option value="SGD">S$ SGD</option>
+          <option value="QAR">﷼ QAR</option>
+          <option value="SAR">﷼ SAR</option>
         </select>
       </div>
       <button type="submit" class="btn-primary">💾 Save Budget</button>
@@ -887,7 +919,7 @@ const CATS = [
   {id:'misc',           label:'Miscellaneous',               emoji:'📦', color:'#BFC9CA'},
 ];
 
-const SYM = {INR:'₹', USD:'$', EUR:'€'};
+const SYM = {INR:'₹', USD:'$', EUR:'€', GBP:'£', AED:'د.إ', CAD:'C$', AUD:'A$', SGD:'S$', QAR:'﷼', SAR:'﷼'};
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
 
@@ -1624,11 +1656,22 @@ function renderBudgetGrid() {
 // ════════════════════════════════════════
 // ADD EXPENSE
 // ════════════════════════════════════════
-function openAddExpense() {
+function _openAddModal() {
   document.getElementById('eDate').value=new Date().toISOString().split('T')[0];
   document.getElementById('eCurr').value=currency;
   document.getElementById('bCurr').value=currency;
   document.getElementById('addModal').style.display='flex';
+}
+function openAddExpense() {
+  _openAddModal();
+  document.querySelector('#addModal .modal-title').textContent = '➕ Add Expense / Income';
+}
+function openAddSavings() {
+  _openAddModal();
+  document.querySelector('#addModal .modal-title').textContent = '💰 Log Savings / Investment';
+  const catSel = document.getElementById('eCat');
+  if (catSel) catSel.value = 'savings';
+  document.getElementById('eType').value = 'expense';
 }
 async function submitExpense(ev) {
   ev.preventDefault();
