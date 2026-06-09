@@ -146,6 +146,38 @@
 
     /* ── BUDGET GRID ── */
     .budget-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+    /* ── INSIGHTS & GOALS TAB ── */
+    .ins-section{margin-bottom:26px;}
+    .ins-sec-title{font-size:.76rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+    .health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+    .health-card{background:var(--navy-card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;text-align:center;}
+    .health-score{font-size:2.2rem;font-weight:800;line-height:1.1;margin:8px 0 4px;}
+    .health-lbl{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+    .health-bar{height:5px;background:var(--border);border-radius:3px;margin-top:12px;overflow:hidden;}
+    .health-bar-fill{height:100%;border-radius:3px;transition:width .5s;}
+    .health-tip{font-size:.72rem;margin-top:6px;}
+    .insight-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+    .insight-card{background:var(--navy-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;}
+    .insight-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px;}
+    .insight-title{font-size:.72rem;color:var(--muted);margin-bottom:4px;font-weight:500;}
+    .insight-value{font-size:1.05rem;font-weight:700;color:#fff;line-height:1.3;}
+    .insight-sub{font-size:.7rem;color:var(--muted);margin-top:3px;}
+    .goal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .goal-card{background:var(--navy-card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;}
+    .goal-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+    .goal-name{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:2px;}
+    .goal-deadline{font-size:.7rem;color:var(--muted);}
+    .goal-amounts{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 8px;}
+    .goal-current{font-size:1.3rem;font-weight:800;color:var(--green);}
+    .goal-target{font-size:.78rem;color:var(--muted);}
+    .goal-progress-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+    .goal-progress-fill{height:100%;border-radius:4px;transition:width .6s;}
+    .goal-meta{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:6px;}
+    .goal-del{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--border);cursor:pointer;font-size:.95rem;transition:color .2s;padding:2px 6px;}
+    .goal-del:hover{color:var(--red);}
+    .goal-empty{text-align:center;padding:36px 20px;color:var(--muted);background:var(--navy-card);border:1px dashed var(--border);border-radius:14px;grid-column:1/-1;}
+    @media(max-width:700px){.health-grid{grid-template-columns:1fr 1fr;}.insight-grid{grid-template-columns:1fr;}}
+    @media(max-width:420px){.health-grid{grid-template-columns:1fr;}}
     .budget-item{background:var(--navy-card);border:1px solid var(--border);border-radius:12px;
       padding:14px 16px;cursor:pointer;transition:border-color .2s;}
     .budget-item:hover{border-color:var(--green);}
@@ -297,7 +329,7 @@
   <a href="index.html" class="nav-logo">Fini<span>Q</span></a>
   <ul class="nav-tabs">
     <li><button class="active" onclick="showTab('overview',this)">📊 Overview</button></li>
-    <li><button onclick="showTab('budget',this)">🎯 Budget</button></li>
+    <li><button onclick="showTab('budget',this)">💡 Goals</button></li>
     <li><button onclick="showTab('reports',this)">📈 Reports</button></li>
     <li><button onclick="showTab('upload',this)">📂 Bank Statement</button></li>
   </ul>
@@ -458,13 +490,23 @@
     </div>
   </div>
 
-  <!-- ── BUDGET TAB ── -->
+  <!-- ── GOALS & INSIGHTS TAB ── -->
   <div id="tab-budget" class="tab-content">
-    <p style="color:var(--muted);font-size:.83rem;margin-bottom:16px;">
-      Click any category to set your budget. <strong style="color:var(--green);">Set it once — it applies to every month automatically.</strong>
-      Change it any time. &nbsp; 🟢 On track &nbsp; 🟡 75%+ used &nbsp; 🔴 Over budget
-    </p>
-    <div class="budget-grid" id="budgetGrid"></div>
+    <div class="ins-section">
+      <div class="ins-sec-title">📊 Financial Health — <span id="insMonthLabel"></span></div>
+      <div class="health-grid" id="healthGrid"></div>
+    </div>
+    <div class="ins-section">
+      <div class="ins-sec-title">💡 Smart Insights</div>
+      <div class="insight-grid" id="insightGrid"></div>
+    </div>
+    <div class="ins-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="ins-sec-title" style="margin:0;">🎯 My Savings Goals</div>
+        <button onclick="openAddGoal()" class="ms-add-btn">＋ Add Goal</button>
+      </div>
+      <div class="goal-grid" id="goalGrid"></div>
+    </div>
   </div>
 
   <!-- ── REPORTS TAB ── -->
@@ -842,33 +884,35 @@
   </div>
 </div>
 
-<!-- ══ SET BUDGET MODAL ══ -->
-<div id="budgetModal" class="modal-overlay" onclick="closeOut(event,'budgetModal')">
-  <div class="modal-box" style="max-width:360px;">
-    <button class="modal-close" onclick="closeModal('budgetModal')">✕</button>
-    <div class="modal-title" id="budgetModalTitle">Set Budget</div>
-    <form onsubmit="saveBudget(event)">
-      <input type="hidden" id="bCat" />
+<!-- ══ ADD GOAL MODAL ══ -->
+<div id="goalModal" class="modal-overlay" onclick="closeOut(event,'goalModal')">
+  <div class="modal-box" style="max-width:400px;">
+    <button class="modal-close" onclick="closeModal('goalModal')">✕</button>
+    <div class="modal-title">🎯 New Savings Goal</div>
+    <form onsubmit="saveGoal(event)">
       <div class="form-group">
-        <label>Budget Amount (applies to every month)</label>
-        <input type="number" id="bAmt" placeholder="0.00" step="0.01" min="0" required />
+        <label>Goal Name</label>
+        <input type="text" id="gName" placeholder="e.g. Emergency Fund, Holiday, Home Deposit" required />
+      </div>
+      <div style="display:grid;grid-template-columns:80px 1fr;gap:12px;">
+        <div class="form-group">
+          <label>Emoji</label>
+          <input type="text" id="gEmoji" value="🎯" maxlength="4" style="text-align:center;font-size:1.4rem;" />
+        </div>
+        <div class="form-group">
+          <label>Target Amount</label>
+          <input type="number" id="gTarget" placeholder="5000" step="0.01" min="0" required />
+        </div>
       </div>
       <div class="form-group">
-        <label>Currency</label>
-        <select id="bCurr">
-          <option value="EUR">€ EUR</option>
-          <option value="INR">₹ INR</option>
-          <option value="USD">$ USD</option>
-          <option value="GBP">£ GBP</option>
-          <option value="AED">د.إ AED</option>
-          <option value="CAD">C$ CAD</option>
-          <option value="AUD">A$ AUD</option>
-          <option value="SGD">S$ SGD</option>
-          <option value="QAR">﷼ QAR</option>
-          <option value="SAR">﷼ SAR</option>
-        </select>
+        <label>Already Saved</label>
+        <input type="number" id="gCurrent" placeholder="0.00" step="0.01" min="0" />
       </div>
-      <button type="submit" class="btn-primary">💾 Save Budget</button>
+      <div class="form-group">
+        <label>Target Date (optional)</label>
+        <input type="month" id="gDeadline" />
+      </div>
+      <button type="submit" class="btn-primary">✅ Create Goal</button>
     </form>
   </div>
 </div>
@@ -917,6 +961,7 @@ const CATS = [
   {id:'savings',        label:'Savings & Investment',        emoji:'💰', color:'#A9DFBF'},
   {id:'charity',        label:'Charity & Donations',         emoji:'❤️', color:'#F1948A'},
   {id:'misc',           label:'Miscellaneous',               emoji:'📦', color:'#BFC9CA'},
+  {id:'remittance',     label:'Money Sent Home',             emoji:'🏡', color:'#AED6F1'},
 ];
 
 const SYM = {INR:'₹', USD:'$', EUR:'€', GBP:'£', AED:'د.إ', CAD:'C$', AUD:'A$', SGD:'S$', QAR:'﷼', SAR:'﷼'};
@@ -1190,7 +1235,7 @@ function mBud() {
 function renderAll() {
   renderMonthlySummary();
   renderStats(); renderPie(); renderBar();
-  renderExpList(); renderBudgetGrid(); renderReports();
+  renderExpList(); renderInsightsGoals(); renderReports();
 }
 
 // ════════════════════════════════════════
@@ -1630,27 +1675,179 @@ function renderExpList() {
 }
 
 // ════════════════════════════════════════
-// BUDGET GRID
+// INSIGHTS & GOALS TAB
 // ════════════════════════════════════════
-function renderBudgetGrid() {
-  const buds=mBud(), ex=mExp(), s=SYM[currency];
-  const ct={}; ex.forEach(e=>{ct[e.category]=(ct[e.category]||0)+Number(e.amount);});
-  document.getElementById('budgetGrid').innerHTML=CATS.map(cat=>{
-    const bud=buds.find(b=>b.category===cat.id);
-    const spent=ct[cat.id]||0, limit=bud?Number(bud.amount):0;
-    const pct=limit>0?Math.min((spent/limit)*100,100):0;
-    const fc=pct>=100?'var(--red)':pct>=75?'var(--yellow)':cat.color;
-    return `<div class="budget-item" onclick="openBudget('${cat.id}','${cat.emoji} ${cat.label}',${limit})">
-      <div class="bi-top">
-        <div class="bi-cat">${cat.emoji} ${cat.label}</div>
-        <div class="bi-amounts">
-          <div class="spent">${s}${fmt(spent)}</div>
-          <div>/ ${limit>0?s+fmt(limit):'No budget set'}</div>
+function renderInsightsGoals() {
+  const ex = mExp();
+  const inc = mAll().filter(e => e.type === 'income');
+  const s = SYM[currency];
+  const now = new Date();
+  const mn = MONTHS[now.getMonth()];
+  const yr = now.getFullYear();
+  document.getElementById('insMonthLabel').textContent = `${mn} ${yr}`;
+
+  const totalIncome = inc.reduce((a,e)=>a+Number(e.amount),0);
+  const totalSpent  = ex.filter(e=>e.type!=='savings').reduce((a,e)=>a+Number(e.amount),0);
+  const totalSaved  = ex.filter(e=>e.category==='savings').reduce((a,e)=>a+Number(e.amount),0);
+  const remittance  = ex.filter(e=>e.category==='remittance').reduce((a,e)=>a+Number(e.amount),0);
+  const remaining   = Math.max(totalIncome - totalSpent, 0);
+  const savingsRate = totalIncome>0 ? (totalSaved/totalIncome)*100 : 0;
+  const spendRate   = totalIncome>0 ? (totalSpent/totalIncome)*100 : 0;
+
+  // ── Health Cards ──
+  const healthData = [
+    {
+      label:'Savings Rate',
+      value: savingsRate.toFixed(0)+'%',
+      color: savingsRate>=20?'var(--green)':savingsRate>=10?'var(--yellow)':'var(--red)',
+      bar: Math.min(savingsRate,100),
+      tip: savingsRate>=20?'Great! Above 20% target 🎉':savingsRate>=10?'Getting there — aim for 20%':'Try to save at least 10%'
+    },
+    {
+      label:'Spent vs Income',
+      value: spendRate.toFixed(0)+'%',
+      color: spendRate<=70?'var(--green)':spendRate<=90?'var(--yellow)':'var(--red)',
+      bar: Math.min(spendRate,100),
+      tip: spendRate<=70?'Healthy spending 👍':spendRate<=90?'A bit high — watch expenses':'Spending exceeds income!'
+    },
+    {
+      label:'Money Sent Home',
+      value: remittance>0?`${s}${fmt(remittance)}`:'—',
+      color: '#AED6F1',
+      bar: totalIncome>0?Math.min((remittance/totalIncome)*100,100):0,
+      tip: remittance>0?`${((remittance/totalIncome)*100).toFixed(0)}% of income remitted`:'No remittance logged yet'
+    },
+  ];
+  document.getElementById('healthGrid').innerHTML = healthData.map(h=>`
+    <div class="health-card">
+      <div class="health-lbl">${h.label}</div>
+      <div class="health-score" style="color:${h.color}">${h.value}</div>
+      <div class="health-bar"><div class="health-bar-fill" style="width:${h.bar}%;background:${h.color}"></div></div>
+      <div class="health-tip" style="color:${h.color}">${h.tip}</div>
+    </div>`).join('');
+
+  // ── Smart Insights ──
+  const ct={};
+  ex.filter(e=>e.type!=='savings').forEach(e=>{ct[e.category]=(ct[e.category]||0)+Number(e.amount);});
+  const topCat = CATS.filter(c=>ct[c.id]>0).sort((a,b)=>(ct[b.id]||0)-(ct[a.id]||0))[0];
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(yr, now.getMonth()+1, 0).getDate();
+  const dailyBurn = dayOfMonth>0 ? totalSpent/dayOfMonth : 0;
+  const projectedEnd = dailyBurn * daysInMonth;
+  const avgExpense = ex.length>0 ? totalSpent/ex.filter(e=>e.type!=='savings').length : 0;
+
+  const insights = [
+    {icon:'🔥', title:'Biggest Spend', value: topCat?`${topCat.emoji} ${topCat.label}`:'No expenses yet', sub: topCat?`${s}${fmt(ct[topCat.id])} this month`:'Log your first expense'},
+    {icon:'💸', title:'Daily Burn Rate', value: `${s}${fmt(dailyBurn)}/day`, sub: `Projected end-of-month: ${s}${fmt(projectedEnd)}`},
+    {icon:'💰', title:'Saved This Month', value: `${s}${fmt(totalSaved)}`, sub: savingsRate>0?`${savingsRate.toFixed(1)}% of income`:'Nothing saved yet — start small!'},
+    {icon:'🏦', title:'Remaining Balance', value: `${s}${fmt(remaining)}`, sub: totalIncome>0?`After all spending this month`:'Add your income first'},
+  ];
+  document.getElementById('insightGrid').innerHTML = insights.map(i=>`
+    <div class="insight-card">
+      <div class="insight-icon">${i.icon}</div>
+      <div>
+        <div class="insight-title">${i.title}</div>
+        <div class="insight-value">${i.value}</div>
+        <div class="insight-sub">${i.sub}</div>
+      </div>
+    </div>`).join('');
+
+  // ── Goals ──
+  renderGoalCards();
+}
+
+// ── GOALS (stored in localStorage) ──
+function getGoals() {
+  try { return JSON.parse(localStorage.getItem('finiq_goals')||'[]'); }
+  catch(e) { return []; }
+}
+function saveGoals(goals) {
+  localStorage.setItem('finiq_goals', JSON.stringify(goals));
+}
+
+function renderGoalCards() {
+  const goals = getGoals();
+  const s = SYM[currency];
+  const grid = document.getElementById('goalGrid');
+  if (!grid) return;
+  if (goals.length === 0) {
+    grid.innerHTML = `<div class="goal-empty">
+      <div style="font-size:2rem;margin-bottom:10px">🎯</div>
+      <div style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:6px">No goals yet</div>
+      <div style="font-size:.78rem">Add a savings goal — holiday fund, emergency fund, home deposit…</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = goals.map((g,i)=>{
+    const pct = g.target>0 ? Math.min((g.current/g.target)*100,100) : 0;
+    const color = pct>=100?'var(--green)':pct>=60?'#F5C142':'#5DADE2';
+    const deadline = g.deadline ? new Date(g.deadline).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'No deadline';
+    const left = Math.max(g.target - g.current, 0);
+    return `<div class="goal-card">
+      <button class="goal-del" onclick="deleteGoal(${i})" title="Delete">✕</button>
+      <div class="goal-header">
+        <div style="font-size:1.8rem">${g.emoji||'🎯'}</div>
+        <div>
+          <div class="goal-name">${g.name}</div>
+          <div class="goal-deadline">📅 ${deadline}</div>
         </div>
       </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${limit>0?pct:0}%;background:${fc};"></div></div>
+      <div class="goal-amounts">
+        <div class="goal-current">${s}${fmt(g.current)}</div>
+        <div class="goal-target">of ${s}${fmt(g.target)}</div>
+      </div>
+      <div class="goal-progress-bar">
+        <div class="goal-progress-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <div class="goal-meta">
+        <span>${pct.toFixed(0)}% complete</span>
+        <span>${left>0?s+fmt(left)+' to go':'✅ Goal reached!'}</span>
+      </div>
+      <button onclick="addToGoal(${i})" style="margin-top:12px;width:100%;padding:8px;background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.3);border-radius:8px;color:var(--green);font-size:.8rem;font-weight:600;cursor:pointer;">＋ Add Savings</button>
     </div>`;
   }).join('');
+}
+
+function openAddGoal() {
+  document.getElementById('goalModal').style.display='flex';
+  document.getElementById('gName').value='';
+  document.getElementById('gTarget').value='';
+  document.getElementById('gCurrent').value='';
+  document.getElementById('gDeadline').value='';
+  document.getElementById('gEmoji').value='🎯';
+}
+
+function saveGoal(ev) {
+  ev.preventDefault();
+  const goals = getGoals();
+  goals.push({
+    name: document.getElementById('gName').value.trim(),
+    emoji: document.getElementById('gEmoji').value||'🎯',
+    target: parseFloat(document.getElementById('gTarget').value)||0,
+    current: parseFloat(document.getElementById('gCurrent').value)||0,
+    deadline: document.getElementById('gDeadline').value||'',
+    currency: currency,
+    created: new Date().toISOString(),
+  });
+  saveGoals(goals);
+  closeModal('goalModal');
+  renderGoalCards();
+}
+
+function deleteGoal(idx) {
+  const goals = getGoals();
+  goals.splice(idx,1);
+  saveGoals(goals);
+  renderGoalCards();
+}
+
+function addToGoal(idx) {
+  const goals = getGoals();
+  const amt = parseFloat(prompt(`Add savings to "${goals[idx].name}":\nHow much have you saved?`));
+  if (isNaN(amt)||amt<=0) return;
+  goals[idx].current = (goals[idx].current||0) + amt;
+  saveGoals(goals);
+  renderGoalCards();
 }
 
 // ════════════════════════════════════════
@@ -1659,7 +1856,6 @@ function renderBudgetGrid() {
 function _openAddModal() {
   document.getElementById('eDate').value=new Date().toISOString().split('T')[0];
   document.getElementById('eCurr').value=currency;
-  document.getElementById('bCurr').value=currency;
   document.getElementById('addModal').style.display='flex';
 }
 function openAddExpense() {
@@ -1705,29 +1901,7 @@ async function delExp(id) {
   await db.from('expenses').delete().eq('id',id); await loadAll();
 }
 
-// ════════════════════════════════════════
-// SET BUDGET
-// ════════════════════════════════════════
-function openBudget(id,label,cur) {
-  document.getElementById('bCat').value=id;
-  document.getElementById('budgetModalTitle').textContent=`🎯 Budget for ${label}`;
-  document.getElementById('bAmt').value=cur||'';
-  document.getElementById('bCurr').value=currency;
-  document.getElementById('budgetModal').style.display='flex';
-}
-async function saveBudget(ev) {
-  ev.preventDefault();
-  // month=0, year=0 means "default / applies to all months"
-  const {error}=await db.from('budgets').upsert({
-    user_id:user.id,
-    category:document.getElementById('bCat').value,
-    amount:parseFloat(document.getElementById('bAmt').value),
-    currency:document.getElementById('bCurr').value,
-    month:0, year:0,
-  },{onConflict:'user_id,category,month,year'});
-  if(error){alert('Error: '+error.message);return;}
-  closeModal('budgetModal'); await loadAll();
-}
+// (Budget functions removed — replaced by Goals & Insights tab)
 
 // ════════════════════════════════════════
 // YEARLY REPORTS
