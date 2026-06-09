@@ -530,9 +530,9 @@
           </div>
         </div>
         <!-- Annual total — top right -->
-        <div style="background:rgba(0,214,143,.1);border:1px solid rgba(0,214,143,.25);border-radius:12px;padding:12px 18px;text-align:right;">
-          <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Annual Total</div>
-          <div style="font-size:1.5rem;font-weight:800;color:var(--green);" id="annualTotal">—</div>
+        <div style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:12px;padding:12px 18px;text-align:right;">
+          <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Annual Total Spent</div>
+          <div style="font-size:1.5rem;font-weight:800;color:var(--red);" id="annualTotal">—</div>
           <div style="font-size:.7rem;color:var(--muted);margin-top:2px;" id="annualAvg">avg — / month</div>
         </div>
       </div>
@@ -569,14 +569,18 @@
 
     <!-- Bank export guide -->
     <div class="hint-box" id="stmtHints">
-      <strong>💡 How to export your statement:</strong>
-      <div class="hint-grid">
-        <div>🇮🇳 <strong>SBI:</strong> OnlineSBI → My Accounts → Account Statement → Download<br/>
-          🇮🇳 <strong>HDFC:</strong> NetBanking → Accounts → Last 6 Months → Download Statement<br/>
-          🇮🇳 <strong>ICICI:</strong> Internet Banking → My Accounts → View Statement → Download</div>
-        <div>🇮🇪 <strong>Bank of Ireland:</strong> 365 Online → Accounts → Download Transactions<br/>
-          🇮🇪 <strong>AIB:</strong> Online Banking → Accounts → View Transactions → Export CSV<br/>
-          🇺🇸 <strong>Chase / BoA:</strong> Online Banking → Statements → Download CSV or PDF</div>
+      <div style="background:rgba(0,214,143,.12);border:1px solid rgba(0,214,143,.3);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+        <strong style="color:var(--green);">✅ Best results: always download CSV, not PDF</strong><br/>
+        <span style="font-size:.78rem;color:var(--muted);">PDF statements lose column structure during extraction — CSV files import accurately every time.</span>
+      </div>
+      <strong>💡 How to export as CSV:</strong>
+      <div class="hint-grid" style="margin-top:10px;">
+        <div>🇮🇳 <strong>SBI:</strong> OnlineSBI → My Accounts → Account Statement → <strong>Excel/CSV</strong><br/>
+          🇮🇳 <strong>HDFC:</strong> NetBanking → Accounts → Download Statement → <strong>Select CSV</strong><br/>
+          🇮🇳 <strong>ICICI:</strong> Internet Banking → My Accounts → View Statement → <strong>Download CSV</strong></div>
+        <div>🇮🇪 <strong>Bank of Ireland:</strong> 365 Online → Accounts → Download Transactions → <strong>CSV</strong><br/>
+          🇮🇪 <strong>AIB:</strong> Online Banking → View Transactions → <strong>Export CSV</strong><br/>
+          🇦🇪 <strong>Emirates NBD / ADCB:</strong> Online Banking → Statements → <strong>Download Excel/CSV</strong></div>
       </div>
     </div>
 
@@ -2087,6 +2091,8 @@ function parseCSVWithMapping() {
 }
 
 // ── PDF Parser ──
+let _pdfRawText = '';
+
 async function parsePDF(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -2096,88 +2102,159 @@ async function parsePDF(file) {
     for(let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p);
       const content = await page.getTextContent();
-      // Get items with their x,y positions to reconstruct rows
       const items = content.items.map(item => ({
         text: item.str,
         x: Math.round(item.transform[4]),
-        y: Math.round(item.transform[5])
+        y: Math.round(item.transform[5] / 3) * 3  // group nearby y-coords
       }));
-      // Group by y-position (same row)
       const yGroups = {};
       items.forEach(it => {
         if(!yGroups[it.y]) yGroups[it.y] = [];
         yGroups[it.y].push(it);
       });
-      // Sort rows top-to-bottom, items left-to-right within row
       Object.keys(yGroups).sort((a,b) => b-a).forEach(y => {
         const line = yGroups[y].sort((a,b) => a.x-b.x).map(i => i.text).join(' ');
         allText += line + '\n';
       });
     }
 
-    // Parse transaction rows from text
+    _pdfRawText = allText;
     const rows = parsePDFText(allText);
     stmtRows = rows;
 
     hide('pdfProcessing');
     if(rows.length === 0) {
-      alert(`FiniQ extracted ${pdf.numPages} pages but could not detect transactions automatically.\n\nTip: Try downloading the statement as CSV from your bank — CSV files work better for automatic parsing.`);
+      showPDFFailure(pdf.numPages);
       return;
     }
     renderResults(file.name);
+    showRawTextToggle();
   } catch(err) {
     hide('pdfProcessing');
-    alert('Could not read this PDF. Please try downloading your statement as CSV from your bank instead.');
+    showPDFFailure(0);
     console.error(err);
   }
 }
 
+function showPDFFailure(pages) {
+  const existing = document.getElementById('pdfFailBox');
+  if(existing) existing.remove();
+  const box = document.createElement('div');
+  box.id = 'pdfFailBox';
+  box.style.cssText = 'background:var(--navy-card);border:1px solid var(--red);border-radius:14px;padding:24px;margin-bottom:14px;';
+  const rawSnippet = _pdfRawText ? `<details style="margin-top:12px;"><summary style="cursor:pointer;color:var(--green);font-size:.8rem;font-weight:600;">🔍 Show raw text extracted from PDF</summary><pre style="margin-top:8px;font-size:.7rem;color:var(--muted);background:rgba(0,0,0,.3);padding:12px;border-radius:8px;max-height:280px;overflow:auto;white-space:pre-wrap;">${_pdfRawText.slice(0,3000).replace(/</g,'&lt;')}</pre></details>` : '';
+  box.innerHTML = `<div style="font-size:1.4rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-weight:700;color:#fff;margin-bottom:8px;">PDF parsing could not detect transactions${pages?' ('+pages+' pages read)':''}</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:6px;">PDFs do not store column structure — amounts, descriptions and balances all merge into plain text, making automatic detection unreliable.</div>
+    <div style="font-size:.82rem;color:var(--green);font-weight:600;">✅ Fix: download your statement as <strong>CSV or Excel</strong> from your bank app instead.</div>
+    ${rawSnippet}`;
+  document.getElementById('pdfProcessing').after(box);
+}
+
+function showRawTextToggle() {
+  const existing = document.getElementById('rawTextToggle');
+  if(existing) existing.remove();
+  if(!_pdfRawText) return;
+  const el = document.createElement('details');
+  el.id = 'rawTextToggle';
+  el.style.cssText = 'margin-top:10px;font-size:.78rem;';
+  el.innerHTML = `<summary style="cursor:pointer;color:var(--green);font-weight:600;">🔍 Show raw text from PDF (troubleshooting)</summary><pre style="margin-top:8px;background:rgba(0,0,0,.3);padding:12px;border-radius:8px;max-height:220px;overflow:auto;white-space:pre-wrap;color:var(--muted);font-size:.7rem;">${_pdfRawText.slice(0,3000).replace(/</g,'&lt;')}</pre>`;
+  const results = document.getElementById('stmtResults');
+  if(results) results.after(el);
+}
+
 function parsePDFText(text) {
   const rows = [];
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
 
-  // Date patterns: DD/MM/YYYY, DD-MM-YYYY, MM/DD/YYYY, DD MMM YYYY
-  const dateRx = /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{2,4})\b/i;
-  // Amount pattern: numbers like 1,234.56 or 1234.56 (at least 2 digits)
-  const amtRx = /\b(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d{4,}(?:\.\d{1,2})?)\b/g;
+  // Detect bank format style
+  const drCrStyle = /\d\s*(dr|cr)\b/i.test(text);  // Indian banks: SBI, HDFC, ICICI, Axis
+  const signedStyle = /-\s*\d{2,}/.test(text);       // European banks with negative debits
+
+  // Date patterns: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, DD MMM YYYY
+  const dateRx = /\b(\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{2,4})\b/i;
+  const amtStr = '(\\d{1,3}(?:,\\d{3})*(?:\\.\\d{1,2})?|\\d{4,}(?:\\.\\d{1,2})?)';
+  const drCrRxSrc = amtStr + '\\s*(Dr|Cr|DR|CR)\\b';
+
+  const skipRx = /^\s*(date|narration|description|particulars|debit|credit|withdrawal|deposit|balance|chq|ref|opening|closing|total|page|statement|account|branch|ifsc|period)\b/i;
 
   lines.forEach(line => {
+    if(skipRx.test(line)) return;
     const dateMatch = line.match(dateRx);
-    if(!dateMatch) return; // skip lines without a date
+    if(!dateMatch) return;
 
-    const amounts = [];
-    let m;
-    while((m = amtRx.exec(line)) !== null) {
-      const n = parseFloat(m[1].replace(/,/g,''));
-      if(n > 0.5 && n < 99999999) amounts.push(n);
-    }
-    if(amounts.length === 0) return; // no amounts found
+    const lower = line.toLowerCase();
+    const amtRx = new RegExp(amtStr, 'g');
+    const amounts = [...line.matchAll(amtRx)]
+      .map(m => parseFloat(m[1].replace(/,/g,'')))
+      .filter(n => n >= 0.5 && n < 100000000);
+    if(amounts.length === 0) return;
 
-    // Remove date and amounts from line to get description
-    let desc = line
-      .replace(dateRx, '')
-      .replace(/\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b/g, '')
-      .replace(/\s+/g, ' ').trim().slice(0, 80) || 'Transaction';
-
-    // Heuristic: if 2+ amounts, first = debit, second = credit, last = balance
-    // If 1 amount, check for keywords
     let deb = 0, cred = 0, bal = '';
-    const lowerLine = line.toLowerCase();
-    if(amounts.length === 1) {
-      if(lowerLine.includes('cr') || lowerLine.includes('credit') || lowerLine.includes('deposit'))
-        cred = amounts[0];
-      else
-        deb = amounts[0];
-    } else if(amounts.length === 2) {
-      deb = amounts[0]; bal = amounts[1].toString();
-    } else {
-      deb = amounts[0]; cred = amounts[1];
-      if(amounts[2]) bal = amounts[2].toString();
+
+    // ── Strategy 1: Dr/Cr suffix (SBI, HDFC, ICICI, Axis) ──
+    if(drCrStyle) {
+      const drCrMatches = [...line.matchAll(new RegExp(drCrRxSrc, 'gi'))];
+      if(drCrMatches.length > 0) {
+        drCrMatches.forEach(m => {
+          const val = parseFloat(m[1].replace(/,/g,''));
+          if(/cr/i.test(m[2])) cred = val; else deb = val;
+        });
+        // Remaining number is likely balance
+        const tagged = drCrMatches.map(m => m[1]);
+        const remaining = amounts.filter(a => !tagged.some(t => Math.abs(parseFloat(t.replace(/,/g,''))-a)<0.01));
+        if(remaining.length > 0) bal = remaining[remaining.length-1].toString();
+        let desc = line.replace(dateRx,'').replace(new RegExp(drCrRxSrc,'gi'),'').replace(new RegExp(amtStr,'g'),'').replace(/\s+/g,' ').trim().slice(0,100)||'Transaction';
+        if(deb>0||cred>0){ rows.push({date:dateMatch[0],desc,deb,cred,bal}); return; }
+      }
     }
 
-    if(deb > 0 || cred > 0) {
-      rows.push({ date: dateMatch[0], desc, deb, cred, bal });
+    // ── Strategy 2: Signed amounts (negative = debit) ──
+    if(signedStyle && deb===0 && cred===0) {
+      const negM = line.match(/-\s*(\d[\d,\.]+)/);
+      if(negM) {
+        deb = parseFloat(negM[1].replace(/,/g,''));
+        const rest = amounts.filter(a => Math.abs(a-deb)>0.01);
+        if(rest.length) bal = rest[rest.length-1].toString();
+      }
     }
+
+    // ── Strategy 3: Keyword hints ──
+    if(deb===0 && cred===0) {
+      const creditKw = /\b(salary|neft in|imps in|upi credit|credit|deposit|refund|interest earned|reversal)\b/i.test(lower);
+      const debitKw  = /\b(neft out|imps out|upi debit|debit|withdrawal|purchase|payment|charge|fee)\b/i.test(lower);
+      if(creditKw && !debitKw) {
+        cred = amounts[0];
+        if(amounts.length>1) bal = amounts[amounts.length-1].toString();
+      } else if(debitKw && !creditKw) {
+        deb = amounts[0];
+        if(amounts.length>1) bal = amounts[amounts.length-1].toString();
+      }
+    }
+
+    // ── Strategy 4: Positional column guess ──
+    if(deb===0 && cred===0) {
+      if(amounts.length >= 3) {
+        // Largest number is almost always running balance
+        const maxAmt = Math.max(...amounts);
+        const txAmts = amounts.filter(a => a !== maxAmt);
+        bal = maxAmt.toString();
+        deb = txAmts[0] || 0;
+        cred = txAmts.length > 1 ? (txAmts[1] || 0) : 0;
+        // Swap to credit if description hints at income
+        if(cred===0 && deb>0 && /\b(salary|credit|deposit|refund)\b/i.test(lower)){ cred=deb; deb=0; }
+      } else if(amounts.length === 2) {
+        if(amounts[1] > amounts[0] * 1.5) { deb = amounts[0]; bal = amounts[1].toString(); }
+        else { deb = amounts[0]; cred = amounts[1]; }
+      } else {
+        if(/\b(salary|credit|deposit|refund)\b/i.test(lower)) cred = amounts[0];
+        else deb = amounts[0];
+      }
+    }
+
+    let desc = line.replace(dateRx,'').replace(new RegExp(amtStr,'g'),'').replace(/\b(dr|cr)\b/gi,'').replace(/\s+/g,' ').trim().slice(0,100)||'Transaction';
+
+    if(deb>0 || cred>0) rows.push({ date: dateMatch[0], desc, deb, cred, bal });
   });
 
   return rows;
