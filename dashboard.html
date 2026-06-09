@@ -2164,54 +2164,88 @@ function showRawTextToggle() {
 }
 
 function parsePDFText(text) {
+  // ── KEY INSIGHT: group ALL lines between two dates into one transaction block.
+  // This handles multi-line descriptions AND prevents date digits from
+  // being mistaken for monetary amounts (the "6 May 2025 → deb=6" bug).
   const rows = [];
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+  const allLines = text.split('\n').map(l => l.trim());
 
-  // Detect bank format style
-  const drCrStyle = /\d\s*(dr|cr)\b/i.test(text);  // Indian banks: SBI, HDFC, ICICI, Axis
-  const signedStyle = /-\s*\d{2,}/.test(text);       // European banks with negative debits
+  // Detect format styles
+  const drCrStyle  = /\d\s*(dr|cr)\b/i.test(text);   // SBI, HDFC, ICICI, Axis
+  const signedStyle = /-\s*\d{2,}\.?\d*/.test(text);  // Some EU banks
 
-  // Date patterns: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, DD MMM YYYY
-  const dateRx = /\b(\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{2,4})\b/i;
-  const amtStr = '(\\d{1,3}(?:,\\d{3})*(?:\\.\\d{1,2})?|\\d{4,}(?:\\.\\d{1,2})?)';
-  const drCrRxSrc = amtStr + '\\s*(Dr|Cr|DR|CR)\\b';
+  // Date at start-of-line (BOI/AIB/Indian format: "6 May 2025 ...")
+  // Also handles DD/MM/YYYY, YYYY-MM-DD formats
+  const dateRx = /^(\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{2,4})\s*/i;
 
-  const skipRx = /^\s*(date|narration|description|particulars|debit|credit|withdrawal|deposit|balance|chq|ref|opening|closing|total|page|statement|account|branch|ifsc|period)\b/i;
+  // Amount: decimal numbers only (must have .XX) OR integers with comma thousands
+  // Crucially: plain integers like "6", "2025", "202" will NOT match unless they have a decimal
+  // Exception: allow integers up to 6 digits that look like balances (handled later)
+  const amtRx = /\b(\d{1,3}(?:,\d{3})*\.\d{1,2}|\d{4,6}\.\d{1,2})\b/g;
 
-  lines.forEach(line => {
-    if(skipRx.test(line)) return;
-    const dateMatch = line.match(dateRx);
-    if(!dateMatch) return;
+  // Skip obvious header/footer lines
+  const skipRx = /^(date|narration|description|particulars|debit|credit|withdrawal|deposit|balance|opening|closing|total|page\s*\d|statement of|account no|branch|period|your account)/i;
 
-    const lower = line.toLowerCase();
-    const amtRx = new RegExp(amtStr, 'g');
-    const amounts = [...line.matchAll(amtRx)]
-      .map(m => parseFloat(m[1].replace(/,/g,'')))
-      .filter(n => n >= 0.5 && n < 100000000);
-    if(amounts.length === 0) return;
+  // Also skip lines that are pure reference/transaction-ID codes (e.g. IE25040349223036)
+  const refRx = /^[A-Z]{2}\d{10,}$|^\d{12,}$/;
+
+  // ── Pass 1: split text into date-anchored blocks ──
+  const blocks = []; // [{date, lines[]}]
+  let current = null;
+
+  allLines.forEach(line => {
+    if(!line || skipRx.test(line) || refRx.test(line)) return;
+    const dm = line.match(dateRx);
+    if(dm) {
+      if(current) blocks.push(current);
+      current = { date: dm[1], rest: line.slice(dm[0].length).trim(), extra: [] };
+    } else if(current) {
+      current.extra.push(line);
+    }
+  });
+  if(current) blocks.push(current);
+
+  // ── Pass 2: parse each block ──
+  const drCrRxSrc = '(\\d{1,3}(?:,\\d{3})*\\.\\d{1,2}|\\d{4,6}\\.\\d{1,2})\\s*(Dr|Cr|DR|CR)\\b';
+
+  blocks.forEach(block => {
+    // Combine all text in this block (description lines + amount lines)
+    const fullText = [block.rest, ...block.extra].join(' ');
+    const lower = fullText.toLowerCase();
+
+    // Extract only properly formatted monetary amounts (must have decimal point)
+    const amtMatches = [...fullText.matchAll(new RegExp(amtRx.source, 'g'))];
+    const amounts = amtMatches.map(m => parseFloat(m[1].replace(/,/g,''))).filter(n => n >= 0.01 && n < 10000000);
+
+    // Build description: remove amounts and reference codes
+    let desc = fullText
+      .replace(new RegExp(amtRx.source, 'g'), '')
+      .replace(/\b[A-Z]{2}\d{10,}\b/g, '')   // strip IBAN-like refs
+      .replace(/\b\d{8,}\b/g, '')              // strip long pure-integer refs
+      .replace(/\s+/g, ' ').trim().slice(0, 100) || 'Transaction';
+
+    if(amounts.length === 0) return; // no valid amounts in this block
 
     let deb = 0, cred = 0, bal = '';
 
-    // ── Strategy 1: Dr/Cr suffix (SBI, HDFC, ICICI, Axis) ──
+    // ── Strategy 1: Dr/Cr suffix (Indian banks) ──
     if(drCrStyle) {
-      const drCrMatches = [...line.matchAll(new RegExp(drCrRxSrc, 'gi'))];
-      if(drCrMatches.length > 0) {
-        drCrMatches.forEach(m => {
+      const dcMatches = [...fullText.matchAll(new RegExp(drCrRxSrc, 'gi'))];
+      if(dcMatches.length > 0) {
+        dcMatches.forEach(m => {
           const val = parseFloat(m[1].replace(/,/g,''));
           if(/cr/i.test(m[2])) cred = val; else deb = val;
         });
-        // Remaining number is likely balance
-        const tagged = drCrMatches.map(m => m[1]);
-        const remaining = amounts.filter(a => !tagged.some(t => Math.abs(parseFloat(t.replace(/,/g,''))-a)<0.01));
-        if(remaining.length > 0) bal = remaining[remaining.length-1].toString();
-        let desc = line.replace(dateRx,'').replace(new RegExp(drCrRxSrc,'gi'),'').replace(new RegExp(amtStr,'g'),'').replace(/\s+/g,' ').trim().slice(0,100)||'Transaction';
-        if(deb>0||cred>0){ rows.push({date:dateMatch[0],desc,deb,cred,bal}); return; }
+        const taggedVals = dcMatches.map(m => parseFloat(m[1].replace(/,/g,'')));
+        const balCandidates = amounts.filter(a => !taggedVals.some(t => Math.abs(t-a)<0.01));
+        if(balCandidates.length) bal = balCandidates[balCandidates.length-1].toString();
+        if(deb>0||cred>0){ rows.push({date:block.date, desc, deb, cred, bal}); return; }
       }
     }
 
-    // ── Strategy 2: Signed amounts (negative = debit) ──
+    // ── Strategy 2: Signed (negative = debit) ──
     if(signedStyle && deb===0 && cred===0) {
-      const negM = line.match(/-\s*(\d[\d,\.]+)/);
+      const negM = fullText.match(/-\s*(\d[\d,]*\.\d{1,2})/);
       if(negM) {
         deb = parseFloat(negM[1].replace(/,/g,''));
         const rest = amounts.filter(a => Math.abs(a-deb)>0.01);
@@ -2221,40 +2255,46 @@ function parsePDFText(text) {
 
     // ── Strategy 3: Keyword hints ──
     if(deb===0 && cred===0) {
-      const creditKw = /\b(salary|neft in|imps in|upi credit|credit|deposit|refund|interest earned|reversal)\b/i.test(lower);
-      const debitKw  = /\b(neft out|imps out|upi debit|debit|withdrawal|purchase|payment|charge|fee)\b/i.test(lower);
-      if(creditKw && !debitKw) {
-        cred = amounts[0];
-        if(amounts.length>1) bal = amounts[amounts.length-1].toString();
-      } else if(debitKw && !creditKw) {
-        deb = amounts[0];
-        if(amounts.length>1) bal = amounts[amounts.length-1].toString();
-      }
-    }
-
-    // ── Strategy 4: Positional column guess ──
-    if(deb===0 && cred===0) {
-      if(amounts.length >= 3) {
-        // Largest number is almost always running balance
-        const maxAmt = Math.max(...amounts);
-        const txAmts = amounts.filter(a => a !== maxAmt);
-        bal = maxAmt.toString();
-        deb = txAmts[0] || 0;
-        cred = txAmts.length > 1 ? (txAmts[1] || 0) : 0;
-        // Swap to credit if description hints at income
-        if(cred===0 && deb>0 && /\b(salary|credit|deposit|refund)\b/i.test(lower)){ cred=deb; deb=0; }
-      } else if(amounts.length === 2) {
-        if(amounts[1] > amounts[0] * 1.5) { deb = amounts[0]; bal = amounts[1].toString(); }
-        else { deb = amounts[0]; cred = amounts[1]; }
-      } else {
-        if(/\b(salary|credit|deposit|refund)\b/i.test(lower)) cred = amounts[0];
+      const isCredit = /\b(salary|wages|neft in|imps in|upi credit|credit|deposit|refund|interest|reversal|incoming|receipt|io systems|company)\b/i.test(lower);
+      const isDebit  = /\b(neft out|imps out|upi debit|debit|d\/d|dd |standing order|payment|charge|fee|mobi|rent|loan|emi|insurance)\b/i.test(lower);
+      if(isCredit && !isDebit) {
+        // Largest amount is balance if 3+ amounts, otherwise it's the credit
+        if(amounts.length >= 2) { cred = amounts[0]; bal = amounts[amounts.length-1].toString(); }
+        else cred = amounts[0];
+      } else if(isDebit && !isCredit) {
+        if(amounts.length >= 2) { deb = amounts[0]; bal = amounts[amounts.length-1].toString(); }
         else deb = amounts[0];
       }
     }
 
-    let desc = line.replace(dateRx,'').replace(new RegExp(amtStr,'g'),'').replace(/\b(dr|cr)\b/gi,'').replace(/\s+/g,' ').trim().slice(0,100)||'Transaction';
+    // ── Strategy 4: Positional (last amount = running balance) ──
+    if(deb===0 && cred===0) {
+      if(amounts.length === 1) {
+        // Single amount — assume debit unless credit keyword
+        if(/\b(salary|io systems|company|income|deposit)\b/i.test(lower)) cred = amounts[0];
+        else deb = amounts[0];
+      } else if(amounts.length === 2) {
+        // [transaction, balance] — balance is usually larger
+        if(amounts[1] > amounts[0]) { deb = amounts[0]; bal = amounts[1].toString(); }
+        else { deb = amounts[0]; cred = amounts[1]; }
+        // Swap to credit if description hints at income
+        if(deb>0 && /\b(salary|io systems|income|deposit)\b/i.test(lower)){ cred=deb; deb=0; }
+      } else {
+        // 3+ amounts: last = balance, first two = debit/credit columns
+        bal = amounts[amounts.length-1].toString();
+        // One of the first two may be 0 (blank column in PDF)
+        // Pick the non-zero ones as the transaction
+        const txAmts = amounts.slice(0,-1).filter(a => a > 0);
+        if(txAmts.length === 1) {
+          if(/\b(salary|io systems|income|deposit)\b/i.test(lower)) cred = txAmts[0];
+          else deb = txAmts[0];
+        } else if(txAmts.length >= 2) {
+          deb = txAmts[0]; cred = txAmts[1];
+        }
+      }
+    }
 
-    if(deb>0 || cred>0) rows.push({ date: dateMatch[0], desc, deb, cred, bal });
+    if(deb>0||cred>0) rows.push({ date: block.date, desc, deb, cred, bal });
   });
 
   return rows;
