@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Password — FiniQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:      #070E1A;
+      --navy-mid:  #0D1B2E;
+      --navy-card: #112240;
+      --green:     #00D68F;
+      --white:     #FFFFFF;
+      --muted:     #8892A4;
+      --border:    #1C2E45;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--green);
+      text-align: center;
+      margin-bottom: 24px;
+      letter-spacing: -0.5px;
+    }
+    h2 { font-size: 1.4rem; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
+    .auth-input {
+      width: 100%;
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { border-color: var(--green); }
+    .auth-btn {
+      width: 100%;
+      background: var(--green);
+      color: var(--navy);
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s;
+      display: block;
+      text-align: center;
+      text-decoration: none;
+    }
+    .auth-btn:hover { background: #00F0A0; }
+    .auth-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+    .auth-error {
+      background: rgba(255,80,80,0.1);
+      border: 1px solid rgba(255,80,80,0.3);
+      color: #FF8080;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.83rem;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .auth-switch { text-align: center; margin-top: 18px; font-size: 0.85rem; color: var(--muted); }
+    .auth-switch a { color: var(--green); cursor: pointer; font-weight: 600; text-decoration: none; }
+    .auth-switch a:hover { text-decoration: underline; }
+    .center-icon { font-size: 3rem; margin-bottom: 16px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">FiniQ</div>
+
+    <!-- FORM VIEW -->
+    <div id="formView">
+      <h2>Set a new password</h2>
+      <p class="sub">Choose a new password for your FiniQ account.</p>
+      <div id="resetError" class="auth-error"></div>
+      <form onsubmit="handleResetPassword(event)">
+        <input class="auth-input" type="password" id="newPassword" placeholder="New password (min 6 chars)" required minlength="6" />
+        <input class="auth-input" type="password" id="confirmPassword" placeholder="Confirm new password" required minlength="6" />
+        <button class="auth-btn" type="submit" id="resetBtn">Update Password →</button>
+      </form>
+    </div>
+
+    <!-- INVALID / EXPIRED LINK VIEW -->
+    <div id="invalidView" style="display:none; text-align:center;">
+      <div class="center-icon">⚠️</div>
+      <h2 style="margin-bottom:8px;">Link expired or invalid</h2>
+      <p class="sub">This password reset link is no longer valid. Please request a new one from the login screen.</p>
+      <a class="auth-btn" href="index.html">Back to FiniQ →</a>
+    </div>
+
+    <!-- SUCCESS VIEW -->
+    <div id="successView" style="display:none; text-align:center;">
+      <div class="center-icon">✅</div>
+      <h2 style="margin-bottom:8px;">Password updated!</h2>
+      <p class="sub">Your password has been changed. You can now log in with your new password.</p>
+      <a class="auth-btn" href="index.html">Go to FiniQ →</a>
+    </div>
+
+    <p class="auth-switch"><a href="index.html">← Back to FiniQ home</a></p>
+  </div>
+
+  <!-- ===== SUPABASE SDK ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // --- Supabase setup (same project as index.html / dashboard.html) ---
+    const { createClient } = supabase;
+    const db = createClient(
+      'https://uegsgxqedvwqhqivvqzj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlZ3NneHFlZHZ3cWhxaXZ2cXpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NDU4NTQsImV4cCI6MjA5NjIyMTg1NH0.DiPvb6Avw1bqyivofGwBEz-fEEy-JK4s4_DtiShW7Zo'
+    );
+
+    let recoverySessionReady = false;
+
+    // Supabase parses the recovery token from the URL hash automatically
+    // and fires this event once a recovery session is established.
+    db.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        recoverySessionReady = true;
+      }
+    });
+
+    // If no recovery session shows up shortly after load, the link is
+    // missing, expired, or has already been used — show the error view.
+    setTimeout(async () => {
+      if (recoverySessionReady) return;
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) {
+        document.getElementById('formView').style.display = 'none';
+        document.getElementById('invalidView').style.display = 'block';
+      }
+    }, 1500);
+
+    async function handleResetPassword(e) {
+      e.preventDefault();
+      const btn     = document.getElementById('resetBtn');
+      const errEl   = document.getElementById('resetError');
+      const pass    = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+
+      errEl.style.display = 'none';
+
+      if (pass !== confirm) {
+        errEl.textContent = 'Passwords do not match.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Updating...';
+      btn.disabled = true;
+
+      const { error } = await db.auth.updateUser({ password: pass });
+
+      btn.textContent = 'Update Password →';
+      btn.disabled = false;
+
+      if (error) {
+        errEl.textContent = error.message;
+        errEl.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>

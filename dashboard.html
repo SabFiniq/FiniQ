@@ -168,6 +168,9 @@
     .exp-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;
       padding:4px 6px;border-radius:6px;transition:all .2s;margin-left:4px;}
     .exp-del:hover{color:var(--red);background:rgba(255,107,107,.1);}
+    .exp-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;
+      padding:4px 6px;border-radius:6px;transition:all .2s;margin-left:4px;}
+    .exp-edit:hover{color:var(--green);background:rgba(0,214,143,.1);}
     .empty-state{text-align:center;padding:36px;color:var(--muted);}
     .empty-state .icon{font-size:2.2rem;margin-bottom:10px;}
     .empty-state p{font-size:.85rem;}
@@ -916,6 +919,7 @@
     <button class="modal-close" onclick="closeModal('addModal')">✕</button>
     <div class="modal-title">➕ Add Expense / Income</div>
     <form onsubmit="submitExpense(event)">
+      <input type="hidden" id="eEditId" value="" />
       <div class="form-row">
         <div class="form-group">
           <label>Amount *</label>
@@ -1832,6 +1836,7 @@ function renderExpList() {
         <div class="exp-amt ${isInc?'income':''}">${isInc?'+':'-'}${SYM[e.currency]||SYM[currency]}${fmt(e.amount)}</div>
         <div class="exp-date">${ds}</div>
       </div>
+      <button class="exp-edit" onclick="editExp('${e.id}')" title="Edit">✏️</button>
       <button class="exp-del" onclick="delExp('${e.id}')" title="Delete">🗑</button>
     </div>`;
   }).join('');
@@ -2019,11 +2024,29 @@ function addToGoal(idx) {
 function _openAddModal() {
   document.getElementById('eDate').value=new Date().toISOString().split('T')[0];
   document.getElementById('eCurr').value=currency;
+  document.getElementById('eEditId').value='';
+  document.getElementById('addBtn').textContent='Add Entry';
   document.getElementById('addModal').style.display='flex';
 }
 function openAddExpense() {
   _openAddModal();
   document.querySelector('#addModal .modal-title').textContent = '➕ Add Expense / Income';
+}
+// Open the Add Expense modal pre-filled with an existing entry, so the
+// user can correct a mistake instead of deleting + re-adding.
+function editExp(id) {
+  const e = expenses.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('addModal').style.display='flex';
+  document.querySelector('#addModal .modal-title').textContent = '✏️ Edit Entry';
+  document.getElementById('eEditId').value = e.id;
+  document.getElementById('eAmt').value = e.amount;
+  document.getElementById('eCurr').value = e.currency || currency;
+  document.getElementById('eCat').value = e.category;
+  document.getElementById('eDate').value = e.date;
+  document.getElementById('eType').value = e.type === 'income' ? 'income' : 'expense';
+  document.getElementById('eNote').value = e.note || '';
+  document.getElementById('addBtn').textContent = 'Save Changes';
 }
 function openAddSavings() {
   _openAddModal();
@@ -2035,9 +2058,10 @@ function openAddSavings() {
 async function submitExpense(ev) {
   ev.preventDefault();
   const btn=document.getElementById('addBtn');
+  const editId=document.getElementById('eEditId').value;
 
-  // Free tier limit: 50 expenses per month
-  if (!isPremium && mExp().length >= 50) {
+  // Free tier limit: 50 expenses per month (only applies to NEW entries)
+  if (!editId && !isPremium && mExp().length >= 50) {
     alert('Free plan limit reached — 50 expenses per month.\n\nUpgrade to Premium for unlimited expense tracking!');
     btn.disabled = false;
     closeModal('addModal');
@@ -2045,18 +2069,23 @@ async function submitExpense(ev) {
     return;
   }
 
-  btn.textContent='Saving...'; btn.disabled=true;
-  const {error}=await db.from('expenses').insert({
-    user_id:user.id,
+  const payload={
     amount:parseFloat(document.getElementById('eAmt').value),
     category:document.getElementById('eCat').value,
     currency:document.getElementById('eCurr').value,
     date:document.getElementById('eDate').value,
     note:document.getElementById('eNote').value,
     type:document.getElementById('eType').value,
-  });
-  btn.textContent='Add Entry'; btn.disabled=false;
+  };
+
+  btn.textContent='Saving...'; btn.disabled=true;
+  const {error} = editId
+    ? await db.from('expenses').update(payload).eq('id', editId)
+    : await db.from('expenses').insert({ user_id:user.id, ...payload });
+  btn.textContent = editId ? 'Save Changes' : 'Add Entry';
+  btn.disabled=false;
   if(error){alert('Error: '+error.message);return;}
+  document.getElementById('eEditId').value='';
   closeModal('addModal'); ev.target.reset(); await loadAll();
 }
 async function delExp(id) {

@@ -1113,7 +1113,28 @@
           <input class="auth-input" type="password" id="loginPassword" placeholder="Password"      required />
           <button class="auth-btn" type="submit" id="loginBtn">Log In →</button>
         </form>
+        <p class="auth-switch" style="margin-top:10px;"><a onclick="showForgotView()">Forgot password?</a></p>
         <p class="auth-switch">Don't have an account? <a onclick="showSignupView()">Sign up free</a></p>
+      </div>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <div id="forgotView" style="display:none;">
+        <h2>Reset your password</h2>
+        <p class="modal-sub">Enter your account email and we'll send you a link to reset your password.</p>
+        <div id="forgotError" class="auth-error"></div>
+        <form onsubmit="handleForgotPassword(event)">
+          <input class="auth-input" type="email" id="forgotEmail" placeholder="Email address" required />
+          <button class="auth-btn" type="submit" id="forgotBtn">Send Reset Link →</button>
+        </form>
+        <p class="auth-switch">Remembered it? <a onclick="showLoginView()">Back to log in</a></p>
+      </div>
+
+      <!-- FORGOT PASSWORD — EMAIL SENT -->
+      <div id="forgotSentView" style="display:none; text-align:center; padding: 20px 0;">
+        <div style="font-size:3rem; margin-bottom:16px;">📧</div>
+        <h2 style="margin-bottom:8px;">Check your email</h2>
+        <p class="modal-sub">We've sent a password reset link to your email address. Click the link to set a new password.</p>
+        <button class="auth-btn" onclick="showLoginView()">Back to log in</button>
       </div>
 
       <!-- SUCCESS VIEW (after sign up) -->
@@ -1283,6 +1304,8 @@
     function showSignupView() {
       document.getElementById('signupView').style.display = 'block';
       document.getElementById('loginView').style.display  = 'none';
+      document.getElementById('forgotView').style.display = 'none';
+      document.getElementById('forgotSentView').style.display = 'none';
       document.getElementById('successView').style.display = 'none';
       document.getElementById('signupError').style.display = 'none';
     }
@@ -1291,8 +1314,23 @@
     function showLoginView() {
       document.getElementById('loginView').style.display  = 'block';
       document.getElementById('signupView').style.display = 'none';
+      document.getElementById('forgotView').style.display = 'none';
+      document.getElementById('forgotSentView').style.display = 'none';
       document.getElementById('successView').style.display = 'none';
       document.getElementById('loginError').style.display  = 'none';
+    }
+
+    // Switch to forgot-password view inside the modal
+    function showForgotView() {
+      document.getElementById('forgotView').style.display = 'block';
+      document.getElementById('loginView').style.display  = 'none';
+      document.getElementById('signupView').style.display = 'none';
+      document.getElementById('forgotSentView').style.display = 'none';
+      document.getElementById('successView').style.display = 'none';
+      document.getElementById('forgotError').style.display = 'none';
+      // Pre-fill with whatever email they already typed on the login form
+      const loginEmail = document.getElementById('loginEmail').value.trim();
+      if (loginEmail) document.getElementById('forgotEmail').value = loginEmail;
     }
 
     // SIGN UP — creates a new account in Supabase
@@ -1349,6 +1387,35 @@
       }
 
       window.location.href = 'dashboard.html';
+    }
+
+    // FORGOT PASSWORD — sends a reset link to the user's email
+    async function handleForgotPassword(e) {
+      e.preventDefault();
+      const btn   = document.getElementById('forgotBtn');
+      const errEl = document.getElementById('forgotError');
+      const email = document.getElementById('forgotEmail').value.trim();
+
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+      errEl.style.display = 'none';
+
+      const { error } = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://getfiniq.app/reset-password.html'
+      });
+
+      btn.textContent = 'Send Reset Link →';
+      btn.disabled = false;
+
+      if (error) {
+        errEl.textContent = error.message;
+        errEl.style.display = 'block';
+        return;
+      }
+
+      // Show confirmation view (don't reveal whether the email exists, for privacy)
+      document.getElementById('forgotView').style.display = 'none';
+      document.getElementById('forgotSentView').style.display = 'block';
     }
 
     // LOG OUT
