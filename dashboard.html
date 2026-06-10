@@ -37,6 +37,34 @@
     .btn-logout{background:none;border:1px solid var(--border);color:var(--muted);
       font-family:'Poppins',sans-serif;font-size:.78rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .2s;}
     .btn-logout:hover{border-color:var(--red);color:var(--red);}
+
+    /* ── Profile dropdown (top-right) ── */
+    .profile-menu{position:relative;}
+    .profile-trigger{display:flex;align-items:center;gap:6px;background:var(--navy-card);
+      border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;
+      font-family:'Poppins',sans-serif;font-size:.82rem;color:var(--muted);transition:all .2s;}
+    .profile-trigger:hover{border-color:var(--green);}
+    .profile-trigger strong{color:#fff;font-weight:600;}
+    .profile-avatar{font-size:1rem;line-height:1;}
+    .profile-caret{font-size:.65rem;transition:transform .2s;color:var(--muted);}
+    .profile-menu.open .profile-caret{transform:rotate(180deg);}
+    .profile-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:250px;
+      background:var(--navy-card);border:1px solid var(--border);border-radius:12px;
+      padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.45);
+      opacity:0;visibility:hidden;transform:translateY(-8px);
+      transition:opacity .18s,transform .18s,visibility .18s;z-index:300;}
+    .profile-menu.open .profile-dropdown{opacity:1;visibility:visible;transform:translateY(0);}
+    .pd-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:4px 2px;}
+    .pd-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+    .pd-value{font-size:.82rem;color:#fff;font-weight:600;text-align:right;word-break:break-all;}
+    .pd-divider{height:1px;background:var(--border);margin:10px 0;}
+    .pd-item{display:block;width:100%;text-align:left;background:none;border:1px solid var(--border);
+      color:#c8d8e8;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:500;
+      padding:9px 12px;border-radius:8px;cursor:pointer;margin-bottom:8px;transition:all .2s;}
+    .pd-item:last-child{margin-bottom:0;}
+    .pd-item:hover{border-color:var(--green);color:var(--green);}
+    .pd-item.pd-logout:hover{border-color:var(--red);color:var(--red);}
+    .pd-item:disabled{opacity:.6;cursor:not-allowed;}
     /* Premium badge + upgrade button */
     .premium-badge{background:linear-gradient(135deg,#F5C142,#FF8B00);color:#000;
       font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.04em;}
@@ -257,6 +285,21 @@
     .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;
       color:var(--muted);font-size:1.2rem;cursor:pointer;}
     .modal-close:hover{color:#fff;}
+
+    /* ── Premium plan selector ── */
+    .plan-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .plan-card{position:relative;display:block;width:100%;text-align:left;
+      background:var(--navy-mid);border:1px solid var(--border);border-radius:14px;
+      padding:16px 16px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;}
+    .plan-card:hover{border-color:var(--green);transform:translateY(-2px);}
+    .plan-card.plan-best{border-color:var(--green);background:rgba(0,214,143,.07);}
+    .plan-name{font-size:.74rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+    .plan-price{font-size:1.5rem;font-weight:800;color:#fff;}
+    .plan-price span{font-size:.8rem;font-weight:500;color:var(--muted);}
+    .plan-note{font-size:.74rem;color:var(--muted);margin-top:6px;line-height:1.4;}
+    .plan-badge{position:absolute;top:-10px;right:12px;background:linear-gradient(135deg,#F5C142,#FF8B00);
+      color:#000;font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.04em;}
+    @media(max-width:480px){ .plan-options{grid-template-columns:1fr;} }
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .form-group{margin-bottom:12px;}
     .form-group label{display:block;font-size:.77rem;color:var(--muted);font-weight:500;margin-bottom:5px;}
@@ -360,8 +403,27 @@
       <option value="SAR">﷼ SAR</option>
     </select>
     <div id="premiumNav"><!-- populated by updatePremiumUI() --></div>
-    <div class="user-chip">👋 <strong id="userName">...</strong></div>
-    <button class="btn-logout" onclick="handleLogout()">Log Out</button>
+    <div class="profile-menu" id="profileMenu">
+      <button class="profile-trigger" onclick="toggleProfileMenu(event)">
+        <span class="profile-avatar">👤</span>
+        <strong id="userName">...</strong>
+        <span class="profile-caret">▾</span>
+      </button>
+      <div class="profile-dropdown" id="profileDropdown">
+        <div class="pd-row">
+          <span class="pd-label">Email</span>
+          <span class="pd-value" id="pdEmail">—</span>
+        </div>
+        <div class="pd-row">
+          <span class="pd-label">Plan</span>
+          <span class="pd-value" id="pdPlan">—</span>
+        </div>
+        <div class="pd-divider"></div>
+        <button class="pd-item" id="pdManageBtn" onclick="manageSubscription()" style="display:none;">⚙️ Manage / Cancel Subscription</button>
+        <button class="pd-item" id="pdUpgradeBtn" onclick="startPremium()" style="display:none;">⭐ Upgrade to Premium</button>
+        <button class="pd-item pd-logout" onclick="handleLogout()">🚪 Log Out</button>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -530,7 +592,7 @@
       <div style="font-size:3rem; margin-bottom:16px;">📈</div>
       <h3 style="color:#fff; margin-bottom:8px;">Yearly Reports — Premium Feature</h3>
       <p style="color:var(--muted); max-width:320px; margin:0 auto 20px; font-size:.85rem;">Upgrade to Premium to unlock yearly reports, annual comparisons and full spending history.</p>
-      <button class="btn-upgrade" onclick="startPremium()" id="reportsUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
+      <button class="btn-upgrade" onclick="startPremium()" id="reportsUpgradeBtn">⭐ Upgrade to Premium</button>
     </div>
     <div id="reportsContent">
     <div class="report-card">
@@ -567,7 +629,7 @@
       <div style="font-size:3rem; margin-bottom:16px;">📂</div>
       <h3 style="color:#fff; margin-bottom:8px;">Bank Statement Upload — Premium Feature</h3>
       <p style="color:var(--muted); max-width:320px; margin:0 auto 20px; font-size:.85rem;">Upgrade to Premium to upload CSV and PDF bank statements and import transactions automatically.</p>
-      <button class="btn-upgrade" onclick="startPremium()" id="uploadUpgradeBtn">⭐ Upgrade to Premium — €5/month</button>
+      <button class="btn-upgrade" onclick="startPremium()" id="uploadUpgradeBtn">⭐ Upgrade to Premium</button>
     </div>
 
     <div id="uploadContent">
@@ -934,6 +996,27 @@
   </div>
 </div>
 
+<!-- ══ PLAN SELECTOR MODAL ══ -->
+<div id="planModal" class="modal-overlay" onclick="closeOut(event,'planModal')">
+  <div class="modal-box" style="max-width:440px;">
+    <button class="modal-close" onclick="closeModal('planModal')">✕</button>
+    <div class="modal-title">⭐ Choose Your Premium Plan</div>
+    <div class="plan-options">
+      <button class="plan-card" onclick="startCheckout('monthly')">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">€5<span>/month</span></div>
+        <div class="plan-note">Billed every month · cancel anytime</div>
+      </button>
+      <button class="plan-card plan-best" onclick="startCheckout('yearly')">
+        <div class="plan-badge">Save 58%</div>
+        <div class="plan-name">Yearly</div>
+        <div class="plan-price">€25<span>/year</span></div>
+        <div class="plan-note">Just €2.08/month · billed annually</div>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SCRIPTS ══ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -1109,6 +1192,7 @@ let pieInst = null, barInst = null, yrInst = null;
 // PREMIUM STATE
 // ════════════════════════════════════════
 let isPremium = false;
+let subscriptionStatus = null;
 
 // ════════════════════════════════════════
 // INIT — auth check + premium check
@@ -1119,6 +1203,7 @@ async function init() {
   user = session.user;
   const name = user.user_metadata?.full_name || user.email;
   document.getElementById('userName').textContent = name.split(' ')[0];
+  document.getElementById('pdEmail').textContent = user.email;
   populateCatDropdown();
   document.getElementById('currencySelect').value = currency;
   ['iGross','iCurr'].forEach(id => {
@@ -1153,6 +1238,7 @@ async function checkPremiumStatus() {
     .eq('user_id', user.id)
     .single();
   isPremium = profile?.is_premium || false;
+  subscriptionStatus = profile?.subscription_status || null;
   updatePremiumUI();
 }
 
@@ -1162,7 +1248,7 @@ function updatePremiumUI() {
   if (nav) {
     nav.innerHTML = isPremium
       ? `<span class="premium-badge">⭐ Premium</span>`
-      : `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">⭐ Upgrade €5/mo</button>`;
+      : `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">⭐ Upgrade to Premium</button>`;
   }
 
   // Reports tab gate + content
@@ -1176,31 +1262,91 @@ function updatePremiumUI() {
   if (ug) ug.style.display = isPremium ? 'none' : 'block';
   const uc = document.getElementById('uploadContent');
   if (uc) uc.style.display = isPremium ? 'block' : 'none';
+
+  // Profile dropdown — plan info + manage/upgrade buttons
+  const pdPlan = document.getElementById('pdPlan');
+  const pdManageBtn = document.getElementById('pdManageBtn');
+  const pdUpgradeBtn = document.getElementById('pdUpgradeBtn');
+  if (pdPlan) {
+    pdPlan.textContent = isPremium
+      ? (subscriptionStatus === 'cancelled' ? '⭐ Premium (ending)' : '⭐ Premium — Active')
+      : 'Free Plan';
+  }
+  if (pdManageBtn) pdManageBtn.style.display = isPremium ? 'block' : 'none';
+  if (pdUpgradeBtn) pdUpgradeBtn.style.display = isPremium ? 'none' : 'block';
 }
 
 // ════════════════════════════════════════
 // STRIPE — START PREMIUM CHECKOUT
 // ════════════════════════════════════════
-async function startPremium() {
+const UPGRADE_BTN_TEXT = '⭐ Upgrade to Premium';
+const UPGRADE_BTN_SELECTOR = '.btn-upgrade, #premiumBtn, #reportsUpgradeBtn, #uploadUpgradeBtn, #pdUpgradeBtn';
+
+// Step 1: open the plan picker (Monthly vs Yearly)
+function startPremium() {
+  document.getElementById('planModal').style.display = 'flex';
+}
+
+// Step 2: user picked a plan — go to Stripe Checkout for that plan
+async function startCheckout(plan) {
+  closeModal('planModal');
+
   // Disable all upgrade buttons to prevent double-click
-  document.querySelectorAll('.btn-upgrade, #premiumBtn, #reportsUpgradeBtn, #uploadUpgradeBtn')
+  document.querySelectorAll(UPGRADE_BTN_SELECTOR)
     .forEach(b => { b.textContent = 'Redirecting to Stripe...'; b.disabled = true; });
 
   try {
     const response = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id, userEmail: user.email }),
+      body: JSON.stringify({ userId: user.id, userEmail: user.email, plan }),
     });
     const { url, error } = await response.json();
     if (error) throw new Error(error);
     window.location.href = url; // go to Stripe checkout page
   } catch (err) {
     alert('Could not start checkout: ' + err.message);
-    document.querySelectorAll('.btn-upgrade')
-      .forEach(b => { b.textContent = '⭐ Upgrade to Premium — €5/month'; b.disabled = false; });
+    document.querySelectorAll(UPGRADE_BTN_SELECTOR)
+      .forEach(b => { b.textContent = UPGRADE_BTN_TEXT; b.disabled = false; });
   }
 }
+
+// ════════════════════════════════════════
+// STRIPE — MANAGE / CANCEL SUBSCRIPTION
+// (opens Stripe's hosted Customer Portal)
+// ════════════════════════════════════════
+async function manageSubscription() {
+  const btn = document.getElementById('pdManageBtn');
+  const original = btn.textContent;
+  btn.textContent = 'Opening...';
+  btn.disabled = true;
+  try {
+    const response = await fetch('/api/portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    });
+    const { url, error } = await response.json();
+    if (error) throw new Error(error);
+    window.location.href = url; // go to Stripe Customer Portal
+  } catch (err) {
+    alert('Could not open subscription portal: ' + err.message);
+    btn.textContent = original;
+    btn.disabled = false;
+  }
+}
+
+// ════════════════════════════════════════
+// PROFILE DROPDOWN — open/close
+// ════════════════════════════════════════
+function toggleProfileMenu(ev) {
+  ev.stopPropagation();
+  document.getElementById('profileMenu').classList.toggle('open');
+}
+document.addEventListener('click', (ev) => {
+  const pm = document.getElementById('profileMenu');
+  if (pm && !pm.contains(ev.target)) pm.classList.remove('open');
+});
 
 // ════════════════════════════════════════
 // POPULATE CATEGORY DROPDOWN
