@@ -1198,6 +1198,11 @@ let pieInst = null, barInst = null, yrInst = null;
 let isPremium = false;
 let subscriptionStatus = null;
 
+// 14-day free trial — full Premium access from signup, no card required
+const TRIAL_DAYS = 14;
+let inTrial = false;
+let trialDaysLeft = 0;
+
 // ════════════════════════════════════════
 // INIT — auth check + premium check
 // ════════════════════════════════════════
@@ -1205,6 +1210,14 @@ async function init() {
   const { data:{session} } = await db.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   user = session.user;
+
+  // Compute trial status from account creation date
+  const accountCreated = new Date(user.created_at);
+  const trialEnd = new Date(accountCreated.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  inTrial = now < trialEnd;
+  trialDaysLeft = Math.max(0, Math.ceil((trialEnd - now) / (24 * 60 * 60 * 1000)));
+
   const name = user.user_metadata?.full_name || user.email;
   document.getElementById('userName').textContent = name.split(' ')[0];
   document.getElementById('pdEmail').textContent = user.email;
@@ -1247,25 +1260,32 @@ async function checkPremiumStatus() {
 }
 
 function updatePremiumUI() {
+  // Premium-equivalent access: paid subscriber OR still inside the 14-day trial
+  const effectivePremium = isPremium || inTrial;
+
   // Nav badge
   const nav = document.getElementById('premiumNav');
   if (nav) {
-    nav.innerHTML = isPremium
-      ? `<span class="premium-badge">⭐ Premium</span>`
-      : `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">⭐ Upgrade to Premium</button>`;
+    if (isPremium) {
+      nav.innerHTML = `<span class="premium-badge">⭐ Premium</span>`;
+    } else if (inTrial) {
+      nav.innerHTML = `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">🎁 Trial: ${trialDaysLeft}d left</button>`;
+    } else {
+      nav.innerHTML = `<button class="btn-upgrade" onclick="startPremium()" id="premiumBtn">⭐ Upgrade to Premium</button>`;
+    }
   }
 
   // Reports tab gate + content
   const rg = document.getElementById('reportsGate');
-  if (rg) rg.style.display = isPremium ? 'none' : 'block';
+  if (rg) rg.style.display = effectivePremium ? 'none' : 'block';
   const rc = document.getElementById('reportsContent');
-  if (rc) rc.style.display = isPremium ? 'block' : 'none';
+  if (rc) rc.style.display = effectivePremium ? 'block' : 'none';
 
   // Upload tab gate + content
   const ug = document.getElementById('uploadGate');
-  if (ug) ug.style.display = isPremium ? 'none' : 'block';
+  if (ug) ug.style.display = effectivePremium ? 'none' : 'block';
   const uc = document.getElementById('uploadContent');
-  if (uc) uc.style.display = isPremium ? 'block' : 'none';
+  if (uc) uc.style.display = effectivePremium ? 'block' : 'none';
 
   // Profile dropdown — plan info + manage/upgrade buttons
   const pdPlan = document.getElementById('pdPlan');
@@ -1274,7 +1294,7 @@ function updatePremiumUI() {
   if (pdPlan) {
     pdPlan.textContent = isPremium
       ? (subscriptionStatus === 'cancelled' ? '⭐ Premium (ending)' : '⭐ Premium — Active')
-      : 'Free Plan';
+      : (inTrial ? `🎁 Free Trial — ${trialDaysLeft}d left` : 'Free Plan');
   }
   if (pdManageBtn) pdManageBtn.style.display = isPremium ? 'block' : 'none';
   if (pdUpgradeBtn) pdUpgradeBtn.style.display = isPremium ? 'none' : 'block';
@@ -2060,8 +2080,8 @@ async function submitExpense(ev) {
   const btn=document.getElementById('addBtn');
   const editId=document.getElementById('eEditId').value;
 
-  // Free tier limit: 50 expenses per month (only applies to NEW entries)
-  if (!editId && !isPremium && mExp().length >= 50) {
+  // Free tier limit: 50 expenses per month (only applies to NEW entries, not during trial)
+  if (!editId && !isPremium && !inTrial && mExp().length >= 50) {
     alert('Free plan limit reached — 50 expenses per month.\n\nUpgrade to Premium for unlimited expense tracking!');
     btn.disabled = false;
     closeModal('addModal');
