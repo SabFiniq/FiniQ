@@ -241,6 +241,40 @@
     .social-proof p { font-size: 0.85rem; color: var(--muted); }
     .social-proof strong { color: var(--white); }
 
+    /* ===== BEFORE / AFTER COMPARISON ===== */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+    .compare-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .compare-before { opacity: 0.85; }
+    .compare-after { border-color: var(--green); background: rgba(0,214,143,0.06); }
+    .compare-label { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 18px; }
+    .compare-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .compare-list li { font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+    .compare-after .compare-list li { color: var(--white); }
+    .compare-result {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .compare-result-green { color: var(--green); }
+    .compare-arrow { font-size: 1.8rem; color: var(--green); text-align: center; font-weight: 700; }
+    @media (max-width: 768px) {
+      .compare-grid { grid-template-columns: 1fr; }
+      .compare-arrow { transform: rotate(90deg); }
+    }
+
     /* ===== FEATURES ===== */
     #features { background: var(--navy-mid); }
     .features-grid {
@@ -712,6 +746,42 @@
       <p>Built for <strong>Indians living in Ireland, UK, USA, Germany, Canada and UAE</strong> — the only app that manages your money across two countries.</p>
     </div>
   </div>
+
+  <!-- ===== BEFORE / AFTER COMPARISON ===== -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header fade-in" style="text-align:center;">
+        <div class="section-label">The NRI Money Mess</div>
+        <h2 class="section-title">Stop juggling 4 apps just to know where you stand</h2>
+        <p class="section-sub" style="margin:0 auto;">If you live abroad and still have money, family, or investments in India, this probably looks familiar.</p>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-card compare-before fade-in">
+          <div class="compare-label">😩 Without FiniQ</div>
+          <ul class="compare-list">
+            <li>🏦 App 1 — your bank app for EUR/GBP salary &amp; spending</li>
+            <li>🇮🇳 App 2 — Indian bank app for INR savings &amp; remittances</li>
+            <li>📈 App 3 — NSE/BSE broker for Indian stocks</li>
+            <li>🌍 App 4 — US/European broker for global stocks</li>
+            <li>📝 Spreadsheet — manually adding it all up (if you even do)</li>
+          </ul>
+          <div class="compare-result">Total net worth? 🤷 No idea.</div>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-card compare-after fade-in">
+          <div class="compare-label">🎯 With FiniQ</div>
+          <ul class="compare-list">
+            <li>✅ Income &amp; expenses in EUR, INR, USD, GBP — one dashboard</li>
+            <li>✅ Remittances home tracked alongside local spending</li>
+            <li>✅ NSE, BSE, US &amp; European stocks in one watchlist</li>
+            <li>✅ Savings goals across both countries</li>
+            <li>✅ Net worth calculated automatically, every month</li>
+          </ul>
+          <div class="compare-result compare-result-green">Total net worth: always one glance away ✅</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ===== FEATURES ===== -->
   <section id="features" class="section">
