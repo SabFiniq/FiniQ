@@ -134,6 +134,20 @@
     .ms-legend-item{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted);}
     .ms-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 
+    /* ── TOTAL NET WORTH ── */
+    .nw-wrap{background:linear-gradient(135deg,#2B230D 0%,#0D1B2E 100%);
+      border:1px solid rgba(245,193,66,.25);border-radius:16px;padding:20px 22px;margin-bottom:20px;
+      display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;}
+    .nw-left{display:flex;flex-direction:column;gap:6px;}
+    .nw-label{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;}
+    .nw-value{font-size:2.1rem;font-weight:800;color:#fff;line-height:1.1;}
+    .nw-sub{font-size:.72rem;color:var(--muted);}
+    .nw-breakdown{display:flex;gap:24px;flex-wrap:wrap;}
+    .nw-bd-item{text-align:right;}
+    .nw-bd-label{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+    .nw-bd-value{font-size:1.05rem;font-weight:700;color:#fff;}
+    @media(max-width:600px){.nw-wrap{flex-direction:column;align-items:flex-start;}.nw-breakdown{width:100%;justify-content:space-between;}.nw-bd-item{text-align:left;}}
+
     /* ── STAT CARDS ── */
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
     .stat-card{background:var(--navy-card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
@@ -455,6 +469,25 @@
 
   <!-- ── OVERVIEW TAB ── -->
   <div id="tab-overview" class="tab-content active">
+
+    <!-- Total Net Worth -->
+    <div class="nw-wrap" id="netWorthCard">
+      <div class="nw-left">
+        <div class="nw-label">💎 Total Net Worth</div>
+        <div class="nw-value" id="nwValue">—</div>
+        <div class="nw-sub" id="nwSub">Savings goals + logged savings &amp; investments, converted to your display currency</div>
+      </div>
+      <div class="nw-breakdown">
+        <div class="nw-bd-item">
+          <div class="nw-bd-label">🎯 Savings Goals</div>
+          <div class="nw-bd-value" id="nwGoals">—</div>
+        </div>
+        <div class="nw-bd-item">
+          <div class="nw-bd-label">📈 Saved &amp; Invested</div>
+          <div class="nw-bd-value" id="nwSavings">—</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Monthly Financial Summary -->
     <div class="ms-wrap" id="msSummary">
@@ -1423,6 +1456,70 @@ function renderAll() {
   renderMonthlySummary();
   renderStats(); renderPie(); renderBar();
   renderExpList(); renderInsightsGoals(); renderReports();
+  renderNetWorth();
+}
+
+// ════════════════════════════════════════
+// TOTAL NET WORTH (multi-currency aggregation)
+// ════════════════════════════════════════
+// Approximate fallback rates (relative to USD) used if live rates can't be fetched.
+const FX_FALLBACK = { USD:1, INR:86, EUR:0.92, GBP:0.78, AED:3.67, CAD:1.37, AUD:1.53, SGD:1.29, QAR:3.64, SAR:3.75 };
+
+function getFxRates() {
+  return new Promise((resolve) => {
+    const today = new Date().toISOString().slice(0,10);
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('finiq_fx_rates')||'null'); } catch(e) {}
+    if (cached && cached.date === today && cached.rates) { resolve(cached.rates); return; }
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.result === 'success' && data.rates) {
+          localStorage.setItem('finiq_fx_rates', JSON.stringify({ date: today, rates: data.rates }));
+          resolve(data.rates);
+        } else {
+          resolve((cached && cached.rates) || FX_FALLBACK);
+        }
+      })
+      .catch(() => resolve((cached && cached.rates) || FX_FALLBACK));
+  });
+}
+
+// Convert an amount from one currency to another using a USD-based rate table.
+function convertAmt(amount, from, to, rates) {
+  from = from || currency;
+  if (from === to) return amount;
+  const rf = rates[from], rt = rates[to];
+  if (!rf || !rt) return amount; // unsupported currency — best effort, no conversion
+  return (amount / rf) * rt;
+}
+
+async function renderNetWorth() {
+  const rates = await getFxRates();
+  const s = SYM[currency];
+
+  // Lifetime "Saved & Invested" — every expense ever logged under the savings category,
+  // across all months/years, converted to the display currency.
+  let savingsTotal = 0;
+  expenses.filter(e => e.category === 'savings').forEach(e => {
+    savingsTotal += convertAmt(Number(e.amount)||0, e.currency, currency, rates);
+  });
+
+  // Savings goal balances, converted to the display currency.
+  const goals = getGoals();
+  let goalsTotal = 0;
+  goals.forEach(g => {
+    goalsTotal += convertAmt(Number(g.current)||0, g.currency, currency, rates);
+  });
+
+  const netWorth = goalsTotal + savingsTotal;
+
+  const elVal = document.getElementById('nwValue');
+  const elGoals = document.getElementById('nwGoals');
+  const elSavings = document.getElementById('nwSavings');
+  if (elVal) elVal.textContent = `${s}${fmt(netWorth)}`;
+  if (elGoals) elGoals.textContent = `${s}${fmt(goalsTotal)}`;
+  if (elSavings) elSavings.textContent = `${s}${fmt(savingsTotal)}`;
 }
 
 // ════════════════════════════════════════
