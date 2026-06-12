@@ -478,11 +478,11 @@
         <div class="nw-sub" id="nwSub">Savings goals + logged savings &amp; investments, converted to your display currency</div>
       </div>
       <div class="nw-breakdown">
-        <div class="nw-bd-item">
-          <div class="nw-bd-label">🎯 Savings Goals</div>
+        <div class="nw-bd-item" title="Sum of 'Already Saved' across all your Savings Goals (Goals tab) — your progress so far, not the target amount.">
+          <div class="nw-bd-label">🎯 Saved Toward Goals</div>
           <div class="nw-bd-value" id="nwGoals">—</div>
         </div>
-        <div class="nw-bd-item">
+        <div class="nw-bd-item" title="Lifetime total of every entry logged under the 'Savings & Investment' category (e.g. via the 'Saved & Invested' card or Add Expense).">
           <div class="nw-bd-label">📈 Saved &amp; Invested</div>
           <div class="nw-bd-value" id="nwSavings">—</div>
         </div>
@@ -640,11 +640,18 @@
             <button class="month-btn" style="width:auto;padding:0 12px;" onclick="changeYear(1)"><span id="nextYear"></span> ▶</button>
           </div>
         </div>
-        <!-- Annual total — top right -->
-        <div style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:12px;padding:12px 18px;text-align:right;">
-          <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Annual Total Spent</div>
-          <div style="font-size:1.5rem;font-weight:800;color:var(--red);" id="annualTotal">—</div>
-          <div style="font-size:.7rem;color:var(--muted);margin-top:2px;" id="annualAvg">avg — / month</div>
+        <!-- Annual totals — top right -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.25);border-radius:12px;padding:12px 18px;text-align:right;">
+            <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Annual Take-Home</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--green);" id="annualTakeHome">—</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:2px;" id="annualTakeHomeSub">net + allowances</div>
+          </div>
+          <div style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:12px;padding:12px 18px;text-align:right;">
+            <div style="font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Annual Total Spent</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--red);" id="annualTotal">—</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:2px;" id="annualAvg">avg — / month</div>
+          </div>
         </div>
       </div>
       <div class="chart-wrap" style="height:250px;"><canvas id="yearlyChart"></canvas></div>
@@ -2221,6 +2228,17 @@ function renderReports() {
   document.getElementById('prevYear').textContent=ry-1;
   document.getElementById('nextYear').textContent=ry+1;
   const s=SYM[currency];
+
+  // Annual take-home = (gross income - tax) + allowances/subsistence, for the selected year
+  const yearEntries = expenses.filter(e => dateOf(e.date).y === ry);
+  const annualGross      = yearEntries.filter(e=>e.type==='income').reduce((a,e)=>a+Number(e.amount),0);
+  const annualTax        = yearEntries.filter(e=>e.type==='tax').reduce((a,e)=>a+Number(e.amount),0);
+  const annualAllowances = yearEntries.filter(e=>e.type==='allowance').reduce((a,e)=>a+Number(e.amount),0);
+  const annualNet        = annualGross - annualTax;
+  const annualTakeHome   = annualNet + annualAllowances;
+  document.getElementById('annualTakeHome').textContent = `${s}${fmt(annualTakeHome)}`;
+  document.getElementById('annualTakeHomeSub').textContent =
+    annualGross > 0 ? `net ${s}${fmt(annualNet)} + allowances ${s}${fmt(annualAllowances)}` : 'no income logged yet';
 
   // Annual total (top-right of chart)
   const annualSpend = expenses
