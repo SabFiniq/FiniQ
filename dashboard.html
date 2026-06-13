@@ -405,6 +405,7 @@
     <li><button onclick="showTab('budget',this)">💡 Goals</button></li>
     <li><button onclick="showTab('reports',this)">📈 Reports</button></li>
     <li><button onclick="showTab('upload',this)">📂 Bank Statement</button></li>
+    <li><button onclick="showTab('bot',this)">🤖 Bot</button></li>
   </ul>
   <div class="nav-right">
     <select class="currency-select" id="currencySelect" onchange="changeCurrency(this.value)">
@@ -803,6 +804,67 @@
     </div>
 
     </div><!-- end uploadContent -->
+  </div>
+
+  <!-- ── FINIQ BOT TAB ── -->
+  <div id="tab-bot" class="tab-content">
+    <div id="botGate" style="display:none; text-align:center; padding:60px 20px;
+      background:var(--navy-card); border:1px solid var(--border); border-radius:16px; margin-bottom:20px;">
+      <div style="font-size:3rem; margin-bottom:16px;">🤖</div>
+      <h3 style="color:#fff; margin-bottom:8px;">FiniQ Bot — Premium Feature</h3>
+      <p style="color:var(--muted); max-width:340px; margin:0 auto 20px; font-size:.85rem;">
+        Log expenses by chatting on Telegram or WhatsApp — text, voice notes, or receipt photos, auto-categorized straight into FiniQ. Upgrade to Premium to unlock.
+      </p>
+      <button class="btn-upgrade" onclick="startPremium()">⭐ Upgrade to Premium</button>
+    </div>
+
+    <div id="botContent">
+      <div class="ins-section">
+        <div class="ins-sec-title">🤖 FiniQ Bot — Connect</div>
+        <div class="report-card">
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px;">
+            Log expenses by texting, sending a voice note, or snapping a receipt photo — on Telegram or WhatsApp. FiniQ auto-categorizes it and updates your dashboard instantly.
+          </p>
+          <div id="botLinkStatus" style="margin-bottom:14px;font-size:.88rem;color:var(--muted);">Loading…</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-primary" onclick="generateLinkCode()">🔗 Generate Linking Code</button>
+          </div>
+          <div id="botLinkCodeBox" style="display:none;background:rgba(0,214,143,.08);border:1px solid rgba(0,214,143,.25);border-radius:10px;padding:14px;margin-top:14px;">
+            <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">Your linking code (valid 10 minutes):</div>
+            <div style="font-size:1.8rem;font-weight:800;letter-spacing:.15em;color:var(--green);" id="botLinkCode">------</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.5;">
+              <strong>Telegram:</strong> open the FiniQ Bot chat and send <code>/link CODE</code><br/>
+              <strong>WhatsApp:</strong> message the FiniQ Bot number and send <code>/link CODE</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ins-section">
+        <div class="ins-sec-title">⚙️ Bot Settings</div>
+        <div class="report-card">
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;">Display currency for /networth &amp; digests</label>
+            <select id="botCurrency" class="currency-select" onchange="saveBotSettings()">
+              <option>INR</option><option>EUR</option><option>USD</option><option>GBP</option>
+              <option>AED</option><option>CAD</option><option>AUD</option><option>SGD</option>
+              <option>QAR</option><option>SAR</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;">Digest frequency</label>
+            <select id="botDigest" class="currency-select" onchange="saveBotSettings()">
+              <option value="off">Off</option>
+              <option value="weekly">Weekly (Mondays)</option>
+              <option value="monthly">Monthly (1st)</option>
+            </select>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="botBudgetAlerts" onchange="saveBotSettings()"/> Send budget alerts via bot
+          </label>
+        </div>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -1435,6 +1497,7 @@ async function loadAll() {
   expenses = e.data || [];
   budgets  = b.data || [];
   renderAll();
+  syncGoalsToSupabase(); // fire-and-forget: mirrors localStorage goals → Supabase for FiniQ Bot
 }
 
 // ════════════════════════════════════════
@@ -2055,6 +2118,81 @@ function getGoals() {
 }
 function saveGoals(goals) {
   localStorage.setItem('finiq_goals', JSON.stringify(goals));
+}
+
+// ── FiniQ Bot: mirror localStorage goals into Supabase so the bot can
+// read accurate /networth and /goals data ──
+async function syncGoalsToSupabase() {
+  try {
+    const goals = getGoals();
+    await db.from('goals').delete().eq('user_id', user.id);
+    if (goals.length) {
+      await db.from('goals').insert(goals.map(g => ({
+        user_id: user.id,
+        name: g.name, emoji: g.emoji || '🎯',
+        target: g.target, current: g.current,
+        deadline: g.deadline || null, currency: g.currency || currency,
+      })));
+    }
+  } catch (e) { /* non-critical */ }
+}
+
+// ── FiniQ Bot tab ──
+async function loadBotTab() {
+  const gate = document.getElementById('botGate');
+  const content = document.getElementById('botContent');
+  if (!isPremium && !inTrial) {
+    gate.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  gate.style.display = 'none';
+  content.style.display = 'block';
+
+  const [{data: links}, {data: settings}] = await Promise.all([
+    db.from('bot_links').select('platform').eq('user_id', user.id),
+    db.from('bot_settings').select('*').eq('user_id', user.id).maybeSingle()
+  ]);
+
+  const statusEl = document.getElementById('botLinkStatus');
+  if (links && links.length) {
+    statusEl.innerHTML = links.map(l =>
+      `✅ Connected: <strong>${l.platform === 'telegram' ? 'Telegram' : 'WhatsApp'}</strong> ` +
+      `<button class="btn-logout" style="margin-left:8px;font-size:.72rem;padding:3px 10px;" onclick="disconnectBot('${l.platform}')">Disconnect</button>`
+    ).join('<br/><br/>');
+  } else {
+    statusEl.innerHTML = '⬜ Not connected yet — generate a code below to link Telegram or WhatsApp.';
+  }
+
+  const s = settings || {};
+  document.getElementById('botCurrency').value = s.home_currency || currency || 'EUR';
+  document.getElementById('botDigest').value = s.digest_frequency || 'weekly';
+  document.getElementById('botBudgetAlerts').checked = s.budget_alerts !== false;
+}
+
+// Generates a short-lived code the user sends to the bot via "/link CODE"
+async function generateLinkCode() {
+  const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const { error } = await db.from('link_codes').insert({ code, user_id: user.id, expires_at: expires });
+  if (error) { alert('Could not generate code: ' + error.message); return; }
+  document.getElementById('botLinkCode').textContent = code;
+  document.getElementById('botLinkCodeBox').style.display = 'block';
+}
+
+async function saveBotSettings() {
+  const home_currency = document.getElementById('botCurrency').value;
+  const digest_frequency = document.getElementById('botDigest').value;
+  const budget_alerts = document.getElementById('botBudgetAlerts').checked;
+  await db.from('bot_settings').upsert(
+    { user_id: user.id, home_currency, digest_frequency, digest_day: 1, budget_alerts },
+    { onConflict: 'user_id' }
+  );
+}
+
+async function disconnectBot(platform) {
+  await db.from('bot_links').delete().eq('user_id', user.id).eq('platform', platform);
+  loadBotTab();
 }
 
 function renderGoalCards() {
@@ -2737,6 +2875,7 @@ function showTab(name,btn) {
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
   if(name==='reports') renderReports();
+  if(name==='bot') loadBotTab();
 }
 function changeMonth(d) {
   cm+=d; if(cm>11){cm=0;cy++;} if(cm<0){cm=11;cy--;}
